@@ -1,0 +1,226 @@
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* waves border */
+
+.waves-bkg {
+  position: relative;
+}
+
+.waves-bkg.top-waves {
+  padding-top: 10px;
+}
+
+.waves-bkg.bottom-waves {
+  padding-bottom: 10px;
+}
+
+.waves-bkg.bottom-waves::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background-size: auto 100%;
+}
+
+.waves-bkg.top-waves::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background-size: auto 100%;
+  transform: scaleY(-1);
+}
+
+.waves-bkg.white-waves::before,
+.waves-bkg.white-waves::after {
+  background: url("/jagged-white.svg") repeat-x;
+}
+
+.waves-bkg.black-waves::before,
+.waves-bkg.black-waves::after {
+  background: url("/jagged-black.svg") repeat-x;
+}
+
+/* @import compass */
+
+/* // n is number of stars required */
+/* @function multiple-box-shadow ($n) 
+  $value: '#{random(2000)}px #{random(2000)}px #FFF'
+  @for $i from 2 through $n
+    $value: '#{$value} , #{random(2000)}px #{random(2000)}px #FFF'
+
+  @return unquote($value) */
+
+html {
+  --shadows-small: multiple-box-shadow(700);
+  --shadows-medium: multiple-box-shadow(200);
+  --shadows-big: multiple-box-shadow(100);
+}
+
+.star-bkg {
+  background: radial-gradient(ellipse at center, #1b2735 0%, #27272a 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.stars1,
+.stars2,
+.stars3 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  background-repeat: repeat;
+  background-size: contain;
+  animation: moveStars 50s linear infinite;
+}
+
+.stars1 {
+  background: url("/stardust.png");
+  opacity: 0.25;
+  animation-duration: 50s;
+}
+
+.stars2 {
+  background: url("/stardust.png");
+  opacity: 0.5;
+  background-position: 75% 50%;
+  animation-duration: 100s;
+  animation-delay: -10s;
+}
+
+.stars3 {
+  background: url("/stardust.png");
+  animation-duration: 300s;
+  background-position: 25% 0%;
+  animation-delay: -20s;
+}
+
+.space-title {
+  color: #fff;
+  text-align: center;
+  font-family: "Lato", sans-serif;
+  font-weight: 300;
+  font-size: 50px;
+  letter-spacing: 10px;
+
+  margin-top: -60px;
+  padding-left: 10px;
+}
+
+.space-title span {
+  background: -webkit-linear-gradient(white, #38495a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes moveStars {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, -50%, 0);
+  }
+}
+
+.wormhole-container {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(
+    circle,
+    black,
+    #1a1a2e,
+    #16213e,
+    transparent,
+    transparent
+  );
+}
+
+.wormhole1,
+.wormhole2,
+.wormhole3,
+.wormhole4 {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 20px 5px rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.wormhole1 {
+  background: url("/stardust.png");
+  animation: spin 3s linear infinite;
+}
+
+.wormhole2 {
+  background: url("/stardust.png");
+  opacity: 0.5;
+  background-position: 75% 50%;
+  animation:
+    spin 3s linear infinite,
+    resize 2s ease-in-out infinite -0.4s;
+}
+
+.wormhole3 {
+  background: url("/stardust.png");
+  background-position: 25% 0%;
+  opacity: 0.75;
+  animation:
+    spin 3s linear infinite,
+    resize 2s ease-in-out infinite -1.1s;
+}
+
+.wormhole4 {
+  background: url("/stardust.png");
+  background-position: 50% 33%;
+  opacity: 0.25;
+  animation:
+    spin 3s linear infinite,
+    resize 2s ease-in-out infinite -1.7s;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes resize {
+  0% {
+    width: 200px;
+    height: 200px;
+    opacity: 1;
+  }
+  99% {
+    width: 0px;
+    height: 0px;
+    opacity: 1;
+  }
+  99.5% {
+    width: 0px;
+    height: 0px;
+    opacity: 0;
+  }
+  100% {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+  }
+}
