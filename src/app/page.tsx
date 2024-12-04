@@ -53,7 +53,7 @@ export default function HomePage() {
     <main className="min-h-screen">
       <SuperFrame src={currentURL} />
       <div className="waves-bkg top-waves black-waves bg-[#27272a]" />
-      <div className="star-bkg flex h-screen flex-col items-center justify-between px-32 py-20">
+      <div className="star-bkg flex min-h-screen flex-col items-center justify-between px-4 py-20 xl:px-32">
         <div className="stars1"></div>
         <div className="stars2"></div>
         <div className="stars3"></div>
