@@ -82,18 +82,18 @@ export default function Morph(props: MorphProps) {
           onClick={() => setOpen(!isOpen)}
           className="cursor-pointer transition-all group-hover:brightness-150"
           style={{
-            height: `150px`,
-            width: `150px`,
+            height: `120px`,
+            width: `120px`,
             clipPath: "url(#morph-clip-path-1)",
           }}
         >
           {buttonBackground}
         </div>
         <div
-          className={`pointer-events-none absolute z-20 select-none rounded-full px-2 py-4 text-5xl transition-all group-hover:rotate-12 group-hover:scale-125 group-hover:brightness-110`}
+          className={`pointer-events-none absolute z-20 select-none rounded-full px-2 py-4 text-4xl transition-all group-hover:rotate-12 group-hover:scale-125 group-hover:brightness-110`}
           style={{
-            bottom: "36px",
-            left: "36px",
+            bottom: "24px",
+            left: "28px",
           }}
         >
           ⌛
