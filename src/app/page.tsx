@@ -58,7 +58,7 @@ export default function HomePage() {
     <main className="min-h-screen">
       <SuperFrame src={currentURL} />
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Morph
           duration={5}
           buttonBackground={<SpaceBackground />}
