@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Morph from "~/_components/morph-shape";
+import SpaceBackground from "~/_components/space-background";
 import SuperFrame from "~/_components/super-frame";
+import TimeTravelScreen from "~/_components/time-travel-screen";
 
 const history = [
   {
@@ -43,8 +46,10 @@ const history = [
 
 export default function HomePage() {
   const [currentURL, setCurrentURL] = useState("https://v7.andremov.dev");
+  const [timeTravelling, setTimeTravelling] = useState(false);
 
   function doTimeTravel(newURL: string) {
+    setTimeTravelling(false);
     setCurrentURL(newURL);
     window.scrollTo({ top: 0 });
   }
@@ -53,36 +58,15 @@ export default function HomePage() {
     <main className="min-h-screen">
       <SuperFrame src={currentURL} />
 
-      <div className="waves-bkg top-waves black-waves bg-[#27272a]" />
-      <div className="star-bkg flex min-h-screen flex-col items-center justify-between px-4 py-20 xl:px-32">
-        <div className="stars1"></div>
-        <div className="stars2"></div>
-        <div className="stars3"></div>
-        <div className="space-title">
-          <span>Time Travel</span>
-        </div>
-        <div className="flex w-full flex-wrap items-center justify-center px-10">
-          {history.map((entry) => (
-            <button
-              key={entry.name}
-              className="group m-12 flex flex-col items-center"
-              onClick={() => doTimeTravel(entry.link)}
-            >
-              <div className="wormhole-container">
-                <div className="wormhole1"></div>
-                <div className="wormhole2"></div>
-                <div className="wormhole3"></div>
-                <div className="wormhole4"></div>
-              </div>
-              <span className="font-[Lato] text-3xl font-bold text-white/30 transition group-hover:text-white/80">
-                {entry.name}
-              </span>
-              <span className="text-base font-medium text-white/10 transition group-hover:text-white/50">
-                {entry.date}
-              </span>
-            </button>
-          ))}
-        </div>
+      <div className="hidden md:block">
+        <Morph
+          duration={5}
+          buttonBackground={<SpaceBackground />}
+          isOpen={timeTravelling}
+          setOpen={setTimeTravelling}
+        >
+          <TimeTravelScreen doTimeTravel={doTimeTravel} history={history} />
+        </Morph>
       </div>
     </main>
   );

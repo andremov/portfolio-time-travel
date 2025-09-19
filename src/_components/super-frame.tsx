@@ -5,7 +5,7 @@ function SuperFrame(props: { src: string }) {
     <iframe
       src={props.src}
       style={{
-        height: "102vh",
+        height: "100vh",
         width: "100%",
       }}
     />
