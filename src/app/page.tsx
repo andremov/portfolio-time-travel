@@ -42,10 +42,15 @@ const history = [
     date: "Dec. 2024",
     link: "https://v7.andremov.dev",
   },
+  {
+    name: "Garden",
+    date: "Mar. 2026",
+    link: "https://v8.andremov.dev",
+  },
 ];
 
 export default function HomePage() {
-  const [currentURL, setCurrentURL] = useState("https://v7.andremov.dev");
+  const [currentURL, setCurrentURL] = useState("https://v8.andremov.dev");
   const [timeTravelling, setTimeTravelling] = useState(false);
 
   function doTimeTravel(newURL: string) {
