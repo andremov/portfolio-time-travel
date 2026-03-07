@@ -12,7 +12,6 @@ export default function TimeTravelScreen({
 }: TimeTravelScreenProps) {
   return (
     <div className="h-screen w-screen">
-      {/* <div className="waves-bkg top-waves black-waves bg-[#27272a]" /> */}
       <SpaceBackground>
         <div className="space-title">
           <span>Time Travel</span>

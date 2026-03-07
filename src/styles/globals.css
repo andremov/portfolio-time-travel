@@ -4,66 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* waves border */
-
-.waves-bkg {
-  position: relative;
-}
-
-.waves-bkg.top-waves {
-  padding-top: 10px;
-}
-
-.waves-bkg.bottom-waves {
-  padding-bottom: 10px;
-}
-
-.waves-bkg.bottom-waves::after {
-  content: "";
-  position: absolute;
-  bottom: -20px;
-  left: 0;
-  width: 100%;
-  height: 20px;
-  background-size: auto 100%;
-}
-
-.waves-bkg.top-waves::before {
-  content: "";
-  position: absolute;
-  top: -20px;
-  left: 0;
-  width: 100%;
-  height: 20px;
-  background-size: auto 100%;
-  transform: scaleY(-1);
-}
-
-.waves-bkg.white-waves::before,
-.waves-bkg.white-waves::after {
-  background: url("/jagged-white.svg") repeat-x;
-}
-
-.waves-bkg.black-waves::before,
-.waves-bkg.black-waves::after {
-  background: url("/jagged-black.svg") repeat-x;
-}
-
-/* @import compass */
-
-/* // n is number of stars required */
-/* @function multiple-box-shadow ($n) 
-  $value: '#{random(2000)}px #{random(2000)}px #FFF'
-  @for $i from 2 through $n
-    $value: '#{$value} , #{random(2000)}px #{random(2000)}px #FFF'
-
-  @return unquote($value) */
-
-html {
-  --shadows-small: multiple-box-shadow(700);
-  --shadows-medium: multiple-box-shadow(200);
-  --shadows-big: multiple-box-shadow(100);
-}
 
 .star-bkg {
   background: radial-gradient(ellipse at center, #1b2735 0%, #27272a 100%);
