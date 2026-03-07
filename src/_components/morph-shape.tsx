@@ -76,9 +76,11 @@ export default function Morph(props: MorphProps) {
             </path>
           </clipPath>
         </svg>
-        <div
+        <button
           onClick={() => setOpen(!isOpen)}
           className="cursor-pointer transition-all group-hover:brightness-150"
+          aria-label={isOpen ? "Close time travel" : "Open time travel"}
+          aria-expanded={isOpen}
           style={{
             height: `120px`,
             width: `120px`,
@@ -86,9 +88,10 @@ export default function Morph(props: MorphProps) {
           }}
         >
           {buttonBackground}
-        </div>
+        </button>
         <div
           className={`pointer-events-none absolute z-20 select-none rounded-full px-2 py-4 text-4xl transition-all group-hover:rotate-12 group-hover:scale-125 group-hover:brightness-110`}
+          aria-hidden="true"
           style={{
             bottom: "24px",
             left: "28px",

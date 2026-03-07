@@ -22,6 +22,7 @@ export default function TimeTravelScreen({
               key={entry.name}
               className="group mx-4 my-12 flex flex-col items-center"
               onClick={() => doTimeTravel(entry.link)}
+              aria-label={`Travel to ${entry.name} portfolio (${entry.date})`}
             >
               <Wormhole />
               <span className="font-[Lato] text-3xl font-bold text-white/30 transition group-hover:text-white/80">

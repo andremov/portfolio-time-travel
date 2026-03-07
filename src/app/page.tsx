@@ -31,6 +31,12 @@ export default function HomePage() {
           <TimeTravelScreen doTimeTravel={doTimeTravel} history={history} />
         </Morph>
       </div>
+
+      <div className="fixed bottom-4 left-1/2 z-10 block -translate-x-1/2 lg:hidden">
+        <p className="rounded-full bg-black/60 px-4 py-2 text-xs text-white/50 backdrop-blur-sm">
+          Visit on desktop for time travel
+        </p>
+      </div>
     </main>
   );
 }

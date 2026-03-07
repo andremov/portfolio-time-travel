@@ -16,6 +16,8 @@ function SuperFrame(props: { src: string }) {
         src={props.src}
         title="Portfolio preview"
         className="h-full w-full"
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+        referrerPolicy="no-referrer"
         onLoad={() => setLoading(false)}
       />
     </div>
