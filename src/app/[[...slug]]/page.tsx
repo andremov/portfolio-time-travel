@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Morph from "~/_components/morph-shape";
 import SpaceBackground from "~/_components/space-background";
@@ -14,27 +14,37 @@ export default function HomePage() {
   const [timeTravelling, setTimeTravelling] = useState(false);
 
   const slug = params.slug ?? [];
-  const versionSlug = slug[0] ?? DEFAULT_VERSION;
-  const innerPath = slug.length > 1 ? "/" + slug.slice(1).join("/") : "";
 
-  const version = useMemo(() => findVersion(versionSlug), [versionSlug]);
+  // If first segment matches a version slug, use it; otherwise treat
+  // the entire slug as an inner path under the default version.
+  const matchedVersion = slug.length > 0 ? findVersion(slug[0]!) : null;
 
-  // Redirect to default version if invalid or no slug
-  useEffect(() => {
-    if (!version) {
-      router.replace(`/${DEFAULT_VERSION}`);
-    }
-  }, [version, router]);
+  const version = useMemo(
+    () => matchedVersion ?? findVersion(DEFAULT_VERSION)!,
+    [matchedVersion],
+  );
 
-  const iframeSrc = version ? `${version.link}${innerPath}` : "";
+  const isDefaultVersion = !matchedVersion;
+  const versionSlug = isDefaultVersion ? DEFAULT_VERSION : slug[0]!;
+  const innerPath = isDefaultVersion
+    ? slug.length > 0
+      ? "/" + slug.join("/")
+      : ""
+    : slug.length > 1
+      ? "/" + slug.slice(1).join("/")
+      : "";
+
+  const iframeSrc = `${version.link}${innerPath}`;
 
   const handleNavMessage = useCallback(
     (path: string) => {
       const cleanPath = path === "/" ? "" : path;
-      const newUrl = `/${versionSlug}${cleanPath}`;
+      const newUrl = isDefaultVersion
+        ? cleanPath || "/"
+        : `/${versionSlug}${cleanPath}`;
       window.history.replaceState(null, "", newUrl);
     },
-    [versionSlug],
+    [versionSlug, isDefaultVersion],
   );
 
   function doTimeTravel(slug: string) {
@@ -42,8 +52,6 @@ export default function HomePage() {
     router.push(`/${slug}`);
     window.scrollTo({ top: 0 });
   }
-
-  if (!version) return null;
 
   return (
     <main className="min-h-screen">
