@@ -2,8 +2,8 @@ import SpaceBackground from "./space-background";
 import Wormhole from "./wormhole";
 
 interface TimeTravelScreenProps {
-  doTimeTravel: (link: string) => void;
-  history: { name: string; date: string; link: string }[];
+  doTimeTravel: (slug: string) => void;
+  history: { name: string; slug: string; date: string; link: string }[];
 }
 
 export default function TimeTravelScreen({
@@ -21,7 +21,7 @@ export default function TimeTravelScreen({
             <button
               key={entry.name}
               className="group mx-4 my-12 flex flex-col items-center"
-              onClick={() => doTimeTravel(entry.link)}
+              onClick={() => doTimeTravel(entry.slug)}
               aria-label={`Travel to ${entry.name} portfolio (${entry.date})`}
             >
               <Wormhole />

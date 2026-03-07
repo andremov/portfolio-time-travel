@@ -1,9 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-function SuperFrame(props: { src: string }) {
+interface SuperFrameProps {
+  src: string;
+  onNavMessage?: (path: string) => void;
+}
+
+function SuperFrame({ src, onNavMessage }: SuperFrameProps) {
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!onNavMessage) return;
+
+    function handleMessage(event: MessageEvent<unknown>) {
+      const data = event.data as Record<string, unknown> | null;
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        data.type === "portfolio-nav" &&
+        typeof data.path === "string"
+      ) {
+        onNavMessage!(data.path);
+      }
+    }
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [onNavMessage]);
 
   return (
     <div className="relative h-screen w-full">
@@ -13,7 +37,7 @@ function SuperFrame(props: { src: string }) {
         </div>
       )}
       <iframe
-        src={props.src}
+        src={src}
         title="Portfolio preview"
         className="h-full w-full"
         sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
