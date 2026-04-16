@@ -40,7 +40,6 @@ function SuperFrame({ src, onNavMessage }: SuperFrameProps) {
         src={src}
         title="Portfolio preview"
         className="h-full w-full"
-        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads allow-popups-to-escape-sandbox"
         referrerPolicy="no-referrer"
         onLoad={() => setLoading(false)}
       />
