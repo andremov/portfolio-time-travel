@@ -13,7 +13,17 @@ function SuperFrame({ src, onNavMessage }: SuperFrameProps) {
   useEffect(() => {
     if (!onNavMessage) return;
 
+    let expectedOrigin: string;
+    try {
+      expectedOrigin = new URL(src).origin;
+    } catch {
+      return;
+    }
+
     function handleMessage(event: MessageEvent<unknown>) {
+      // Only the portfolio we embedded may drive the address bar.
+      if (event.origin !== expectedOrigin) return;
+
       const data = event.data as Record<string, unknown> | null;
       if (
         typeof data === "object" &&
@@ -21,13 +31,13 @@ function SuperFrame({ src, onNavMessage }: SuperFrameProps) {
         data.type === "portfolio-nav" &&
         typeof data.path === "string"
       ) {
-        onNavMessage!(data.path);
+        onNavMessage?.(data.path);
       }
     }
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [onNavMessage]);
+  }, [onNavMessage, src]);
 
   return (
     <div className="relative h-screen w-full">

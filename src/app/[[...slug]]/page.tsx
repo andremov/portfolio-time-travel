@@ -1,78 +1,52 @@
-"use client";
+import { type Metadata } from "next";
+import TimeTravel from "./time-travel";
+import { resolveRoute } from "~/lib/resolve-route";
+import { fetchUpstreamMetadata } from "~/lib/upstream-metadata";
 
-import { useMemo, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Morph from "~/_components/morph-shape";
-import SpaceBackground from "~/_components/space-background";
-import SuperFrame from "~/_components/super-frame";
-import TimeTravelScreen from "~/_components/time-travel-screen";
-import { history, findVersion, DEFAULT_VERSION } from "~/data/history";
+interface PageProps {
+  params: Promise<{ slug?: string[] }>;
+}
 
-export default function HomePage() {
-  const params = useParams<{ slug?: string[] }>();
-  const router = useRouter();
-  const [timeTravelling, setTimeTravelling] = useState(false);
+/**
+ * Mirror the embedded portfolio's metadata onto the shell URL. Crawlers and
+ * link unfurlers don't run JS or read into iframes, so without this every
+ * shell URL shares the generic title from the root layout.
+ */
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const route = resolveRoute(slug ?? []);
+  const upstream = await fetchUpstreamMetadata(route.iframeSrc);
 
-  const slug = params.slug ?? [];
+  // Nothing usable upstream — inherit the layout defaults untouched.
+  if (!upstream) return {};
 
-  // If first segment matches a version slug, use it; otherwise treat
-  // the entire slug as an inner path under the default version.
-  const matchedVersion = slug.length > 0 ? findVersion(slug[0]!) : null;
+  const { title, description, image } = upstream;
+  const images = image !== undefined ? [image] : undefined;
 
-  const version = useMemo(
-    () => matchedVersion ?? findVersion(DEFAULT_VERSION)!,
-    [matchedVersion],
-  );
-
-  const isDefaultVersion = !matchedVersion;
-  const versionSlug = isDefaultVersion ? DEFAULT_VERSION : slug[0]!;
-  const innerPath = isDefaultVersion
-    ? slug.length > 0
-      ? "/" + slug.join("/")
-      : ""
-    : slug.length > 1
-      ? "/" + slug.slice(1).join("/")
-      : "";
-
-  const iframeSrc = `${version.link}${innerPath}`;
-
-  const handleNavMessage = useCallback(
-    (path: string) => {
-      const cleanPath = path === "/" ? "" : path;
-      const newUrl = isDefaultVersion
-        ? cleanPath || "/"
-        : `/${versionSlug}${cleanPath}`;
-      window.history.replaceState(null, "", newUrl);
+  return {
+    ...(title !== undefined && { title }),
+    ...(description !== undefined && { description }),
+    alternates: { canonical: route.shellPath },
+    openGraph: {
+      title,
+      description,
+      images,
+      type: "website",
+      url: route.shellPath,
     },
-    [versionSlug, isDefaultVersion],
-  );
+    twitter: {
+      card: images ? "summary_large_image" : "summary",
+      title,
+      description,
+      images,
+    },
+  };
+}
 
-  function doTimeTravel(slug: string) {
-    setTimeTravelling(false);
-    router.push(`/${slug}`);
-    window.scrollTo({ top: 0 });
-  }
+export default async function HomePage({ params }: PageProps) {
+  const { slug } = await params;
 
-  return (
-    <main className="min-h-screen">
-      <SuperFrame src={iframeSrc} onNavMessage={handleNavMessage} />
-
-      <div className="hidden lg:block">
-        <Morph
-          duration={5}
-          buttonBackground={<SpaceBackground />}
-          isOpen={timeTravelling}
-          setOpen={setTimeTravelling}
-        >
-          <TimeTravelScreen doTimeTravel={doTimeTravel} history={history} />
-        </Morph>
-      </div>
-
-      <div className="fixed bottom-4 left-1/2 z-10 block -translate-x-1/2 lg:hidden">
-        <p className="rounded-full bg-black/60 px-4 py-2 text-xs text-white/50 backdrop-blur-sm">
-          Visit on desktop for time travel
-        </p>
-      </div>
-    </main>
-  );
+  return <TimeTravel slug={slug ?? []} />;
 }
