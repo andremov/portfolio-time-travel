@@ -54,7 +54,7 @@ export default function Morph(props: MorphProps) {
   return (
     <>
       <div
-        className="group absolute z-10 flex max-w-[100vw] items-end overflow-hidden transition-all"
+        className="group absolute z-10 flex max-w-full items-end overflow-hidden transition-all"
         style={{
           bottom: "20px",
           left: `20px`,

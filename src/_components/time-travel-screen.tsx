@@ -11,7 +11,7 @@ export default function TimeTravelScreen({
   history,
 }: TimeTravelScreenProps) {
   return (
-    <div className="h-screen w-screen">
+    <div>
       <SpaceBackground>
         <div className="space-title">
           <span>Time Travel</span>

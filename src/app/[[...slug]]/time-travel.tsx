@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Morph from "~/_components/morph-shape";
 import SpaceBackground from "~/_components/space-background";
 import SuperFrame from "~/_components/super-frame";
@@ -49,13 +50,13 @@ export default function TimeTravel({ slug }: TimeTravelProps) {
         </Morph>
       </div>
 
-      <div className="absolute bottom-4 left-1/2 z-10 block -translate-x-1/2 lg:hidden">
-        <a
-          href="#versions"
-          className="rounded-full bg-black/60 px-4 py-2 text-xs text-white/60 backdrop-blur-sm"
+      <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 lg:left-auto lg:right-4 lg:translate-x-0">
+        <Link
+          href="/versions"
+          className="rounded-full bg-black/70 px-4 py-2 text-xs text-white/85 backdrop-blur-sm transition hover:bg-black/85 hover:text-white"
         >
-          Browse every version ↓
-        </a>
+          All versions →
+        </Link>
       </div>
     </main>
   );

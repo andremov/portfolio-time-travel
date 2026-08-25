@@ -1,7 +1,6 @@
 import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 import TimeTravel from "./time-travel";
-import VersionIndex from "~/_components/version-index";
 import { indexingPolicy, resolveRoute } from "~/lib/resolve-route";
 import { fetchUpstream } from "~/lib/upstream-metadata";
 
@@ -89,10 +88,5 @@ export default async function HomePage({ params }: PageProps) {
     if (status !== null && status >= 400) notFound();
   }
 
-  return (
-    <>
-      <TimeTravel slug={slug ?? []} />
-      <VersionIndex currentSlug={route.version.slug} />
-    </>
-  );
+  return <TimeTravel slug={slug ?? []} />;
 }
