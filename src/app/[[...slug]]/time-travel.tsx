@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Morph from "~/_components/morph-shape";
@@ -8,36 +8,33 @@ import SpaceBackground from "~/_components/space-background";
 import SuperFrame from "~/_components/super-frame";
 import TimeTravelScreen from "~/_components/time-travel-screen";
 import { history } from "~/data/history";
-import { resolveRoute, toShellPath } from "~/lib/resolve-route";
+import { toShellPath, versionHref } from "~/lib/resolve-route";
 
 interface TimeTravelProps {
-  slug: string[];
+  versionSlug: string;
+  iframeSrc: string;
 }
 
-export default function TimeTravel({ slug }: TimeTravelProps) {
+export default function TimeTravel({ versionSlug, iframeSrc }: TimeTravelProps) {
   const router = useRouter();
   const [timeTravelling, setTimeTravelling] = useState(false);
 
-  const slugKey = slug.join("/");
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- slugKey encodes slug
-  const route = useMemo(() => resolveRoute(slug), [slugKey]);
-
   const handleNavMessage = useCallback(
     (path: string) => {
-      window.history.replaceState(null, "", toShellPath(route, path));
+      window.history.replaceState(null, "", toShellPath(versionSlug, path));
     },
-    [route],
+    [versionSlug],
   );
 
   function doTimeTravel(slug: string) {
     setTimeTravelling(false);
-    router.push(`/${slug}`);
+    router.push(versionHref(slug));
     window.scrollTo({ top: 0 });
   }
 
   return (
     <main className="relative">
-      <SuperFrame src={route.iframeSrc} onNavMessage={handleNavMessage} />
+      <SuperFrame src={iframeSrc} onNavMessage={handleNavMessage} />
 
       <div className="hidden lg:block">
         <Morph

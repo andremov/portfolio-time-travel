@@ -25,13 +25,13 @@
 }
 
 .stars1 {
-  background: url("/stardust.png");
+  background: url("/_tm/stardust.png");
   opacity: 0.25;
   animation-duration: 50s;
 }
 
 .stars2 {
-  background: url("/stardust.png");
+  background: url("/_tm/stardust.png");
   opacity: 0.5;
   background-position: 75% 50%;
   animation-duration: 100s;
@@ -39,7 +39,7 @@
 }
 
 .stars3 {
-  background: url("/stardust.png");
+  background: url("/_tm/stardust.png");
   animation-duration: 300s;
   background-position: 25% 0%;
   animation-delay: -20s;
@@ -102,12 +102,12 @@
 }
 
 .wormhole1 {
-  background: url("/stardust.png");
+  background: url("/_tm/stardust.png");
   animation: spin 3s linear infinite;
 }
 
 .wormhole2 {
-  background: url("/stardust.png");
+  background: url("/_tm/stardust.png");
   opacity: 0.5;
   background-position: 75% 50%;
   animation:
@@ -116,7 +116,7 @@
 }
 
 .wormhole3 {
-  background: url("/stardust.png");
+  background: url("/_tm/stardust.png");
   background-position: 25% 0%;
   opacity: 0.75;
   animation:
@@ -125,7 +125,7 @@
 }
 
 .wormhole4 {
-  background: url("/stardust.png");
+  background: url("/_tm/stardust.png");
   background-position: 50% 33%;
   opacity: 0.25;
   animation:
