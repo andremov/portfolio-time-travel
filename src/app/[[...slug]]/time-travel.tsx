@@ -35,7 +35,7 @@ export default function TimeTravel({ slug }: TimeTravelProps) {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="relative">
       <SuperFrame src={route.iframeSrc} onNavMessage={handleNavMessage} />
 
       <div className="hidden lg:block">
@@ -49,10 +49,13 @@ export default function TimeTravel({ slug }: TimeTravelProps) {
         </Morph>
       </div>
 
-      <div className="fixed bottom-4 left-1/2 z-10 block -translate-x-1/2 lg:hidden">
-        <p className="rounded-full bg-black/60 px-4 py-2 text-xs text-white/50 backdrop-blur-sm">
-          Visit on desktop for time travel
-        </p>
+      <div className="absolute bottom-4 left-1/2 z-10 block -translate-x-1/2 lg:hidden">
+        <a
+          href="#versions"
+          className="rounded-full bg-black/60 px-4 py-2 text-xs text-white/60 backdrop-blur-sm"
+        >
+          Browse every version ↓
+        </a>
       </div>
     </main>
   );

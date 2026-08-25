@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 const TIMEOUT_MS = 5000;
 const REVALIDATE_SECONDS = 3600;
 /** Head tags live at the top of the document; no need to parse a whole page. */
@@ -79,44 +81,59 @@ function parseHead(html: string): UpstreamMetadata {
   };
 }
 
+export interface UpstreamResult {
+  /** HTTP status, or null when the request never completed. */
+  status: number | null;
+  metadata: UpstreamMetadata | null;
+}
+
 /**
- * Read the title/description/image an embedded portfolio serves for `url`, so
+ * Read what an embedded portfolio serves for `url`: its status, so the shell
+ * can 404 instead of framing a dead page, and its title/description/image, so
  * the shell can mirror them. Crawlers never look inside the iframe, so without
  * this every shell URL unfurls with the same generic time-travel metadata.
  *
- * Returns null on any failure — callers fall back to the layout defaults.
+ * Cached per render pass so `generateMetadata` and the page share one request.
  */
-export async function fetchUpstreamMetadata(
+export const fetchUpstream = cache(async function fetchUpstream(
   url: string,
-): Promise<UpstreamMetadata | null> {
+): Promise<UpstreamResult> {
+  let response: Response;
   try {
-    const response = await fetch(url, {
+    response = await fetch(url, {
       headers: { Accept: "text/html,application/xhtml+xml" },
       signal: AbortSignal.timeout(TIMEOUT_MS),
       next: { revalidate: REVALIDATE_SECONDS },
     });
-
-    if (!response.ok) return null;
-    if (!(response.headers.get("content-type") ?? "").includes("html")) {
-      return null;
-    }
-
-    const metadata = parseHead((await response.text()).slice(0, MAX_HTML_CHARS));
-    if (metadata.title === undefined && metadata.description === undefined) {
-      return null;
-    }
-
-    if (metadata.image !== undefined) {
-      // og:image is often site-relative; unfurlers need an absolute URL.
-      try {
-        metadata.image = new URL(metadata.image, response.url || url).toString();
-      } catch {
-        metadata.image = undefined;
-      }
-    }
-
-    return metadata;
   } catch {
-    return null;
+    // Upstream unreachable. Distinct from a 404: the page may be fine.
+    return { status: null, metadata: null };
   }
-}
+
+  if (!response.ok) return { status: response.status, metadata: null };
+  if (!(response.headers.get("content-type") ?? "").includes("html")) {
+    return { status: response.status, metadata: null };
+  }
+
+  let metadata: UpstreamMetadata;
+  try {
+    metadata = parseHead((await response.text()).slice(0, MAX_HTML_CHARS));
+  } catch {
+    return { status: response.status, metadata: null };
+  }
+
+  if (metadata.title === undefined && metadata.description === undefined) {
+    return { status: response.status, metadata: null };
+  }
+
+  if (metadata.image !== undefined) {
+    // og:image is often site-relative; unfurlers need an absolute URL.
+    try {
+      metadata.image = new URL(metadata.image, response.url || url).toString();
+    } catch {
+      metadata.image = undefined;
+    }
+  }
+
+  return { status: response.status, metadata };
+});
