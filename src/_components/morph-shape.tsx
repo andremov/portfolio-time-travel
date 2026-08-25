@@ -54,10 +54,12 @@ export default function Morph(props: MorphProps) {
   return (
     <>
       <div
-        className="group absolute z-10 flex max-w-full items-end overflow-hidden transition-all"
+        className="group absolute z-10 flex max-w-full items-end transition-all"
         style={{
           bottom: "20px",
           left: `20px`,
+          height: "120px",
+          width: "120px",
         }}
       >
         <svg className="absolute h-0 w-0">
@@ -89,13 +91,14 @@ export default function Morph(props: MorphProps) {
         >
           {buttonBackground}
         </button>
+        {/*
+          Sibling of the button rather than a child: the button is clipped to
+          the morph shape and would clip the glyph with it. Filling the same
+          box centres it without depending on the glyph's own metrics.
+        */}
         <div
-          className={`pointer-events-none absolute z-20 select-none rounded-full px-2 py-4 text-4xl transition-all group-hover:rotate-12 group-hover:scale-125 group-hover:brightness-110`}
+          className={`pointer-events-none absolute inset-0 z-20 flex select-none items-center justify-center text-4xl transition-all group-hover:rotate-12 group-hover:scale-125 group-hover:brightness-110`}
           aria-hidden="true"
-          style={{
-            bottom: "24px",
-            left: "28px",
-          }}
         >
           ⌛
         </div>

@@ -74,16 +74,20 @@
   root.appendChild(svg);
 
   /* --- trigger --- */
+  var wrap = el("div", "tm-trigger-wrap");
+
   var trigger = el("button", "tm-trigger");
   trigger.type = "button";
   trigger.setAttribute("aria-label", "Open time travel");
   trigger.setAttribute("aria-expanded", "false");
   trigger.appendChild(sky());
-  root.appendChild(trigger);
+  wrap.appendChild(trigger);
 
   var icon = el("span", "tm-trigger-icon", "\u231B");
   icon.setAttribute("aria-hidden", "true");
-  root.appendChild(icon);
+  wrap.appendChild(icon);
+
+  root.appendChild(wrap);
 
   /* --- overlay --- */
   var overlay = el("div", "tm-overlay");
