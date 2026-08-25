@@ -35,7 +35,7 @@ export async function generateMetadata({
 
   if (route.isVersionRoot && isArchive) {
     const { name, date, blurb } = route.version;
-    const title = `${name} (${date}) — Andrés Movilla's portfolio`;
+    const title = `${name} (${date})`;
 
     return {
       title,

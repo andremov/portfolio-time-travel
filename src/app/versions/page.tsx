@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 import Link from "next/link";
 import { history, DEFAULT_VERSION } from "~/data/history";
 
-const TITLE = "Every version — Andrés Movilla's portfolio";
+const TITLE = "Every version of my portfolio";
 const DESCRIPTION =
   "Eight portfolios since 2020, all still online: Circular, Single Page, Hexagons, Rainbow, Minimalist, Astro, Remix, and Garden.";
 
