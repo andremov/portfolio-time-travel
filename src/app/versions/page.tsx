@@ -1,6 +1,7 @@
 import { type Metadata } from "next";
 import Link from "next/link";
 import { history, DEFAULT_VERSION } from "~/data/history";
+import { versionHref } from "~/lib/resolve-route";
 
 const TITLE = "Every version of my portfolio";
 const DESCRIPTION =
@@ -9,8 +10,8 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/versions" },
-  openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/versions" },
+  alternates: { canonical: "/versions/" },
+  openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/versions/" },
   twitter: { card: "summary", title: TITLE, description: DESCRIPTION },
 };
 
@@ -42,8 +43,7 @@ export default function VersionsPage() {
 
         <ol className="mt-10 space-y-6">
           {history.map((version) => {
-            const href =
-              version.slug === DEFAULT_VERSION ? "/" : `/${version.slug}`;
+            const href = versionHref(version.slug);
 
             return (
               <li key={version.slug}>

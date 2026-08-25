@@ -21,6 +21,15 @@ const SHELL_ROUTES = [
 
 /** @type {import("next").NextConfig} */
 const config = {
+  /*
+   * Match the portfolio's own convention. Astro emits directory-style URLs,
+   * so its canonicals and sitemap say "/essays/foo/". Next's default would
+   * redirect that to "/essays/foo", whose canonical points back at the URL
+   * just redirected away from - a loop Google cannot resolve, which leaves
+   * the page unindexed.
+   */
+  trailingSlash: true,
+
   async redirects() {
     return [
       // The current version is the apex itself now, so /v8 is a duplicate.

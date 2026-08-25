@@ -43,5 +43,5 @@ export function toShellPath(versionSlug: string, innerPath: string): string {
 
 /** Where a version is browsed: the apex for the current one, a frame for the rest. */
 export function versionHref(versionSlug: string): string {
-  return versionSlug === DEFAULT_VERSION ? "/" : `/${versionSlug}`;
+  return versionSlug === DEFAULT_VERSION ? "/" : `/${versionSlug}/`;
 }
