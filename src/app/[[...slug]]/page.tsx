@@ -1,6 +1,7 @@
 import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 import TimeTravel from "./time-travel";
+import { DEFAULT_VERSION } from "~/data/history";
 import { indexingPolicy, resolveRoute } from "~/lib/resolve-route";
 import { fetchUpstream } from "~/lib/upstream-metadata";
 
@@ -9,10 +10,14 @@ interface PageProps {
 }
 
 /**
- * Version roots are the shell's own pages and describe themselves. Deeper
- * paths are a frame around the live portfolio, so they mirror its metadata —
+ * Archived version roots are the shell's own pages and describe themselves.
+ * Everything else frames the live portfolio and mirrors its metadata —
  * crawlers and link unfurlers don't run JS or read into iframes, and without
  * this every shell URL would share the generic title from the root layout.
+ *
+ * "/" is deliberately in the second group. It is the live site, not an
+ * exhibit about one, so it should carry the portfolio's own title rather
+ * than a version label and a date.
  */
 export async function generateMetadata({
   params,
@@ -26,7 +31,9 @@ export async function generateMetadata({
     ? { canonical: policy.canonical }
     : undefined;
 
-  if (route.isVersionRoot) {
+  const isArchive = route.version.slug !== DEFAULT_VERSION;
+
+  if (route.isVersionRoot && isArchive) {
     const { name, date, blurb } = route.version;
     const title = `${name} (${date}) — Andrés Movilla's portfolio`;
 
