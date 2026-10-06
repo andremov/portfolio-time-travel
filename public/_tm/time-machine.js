@@ -27,7 +27,7 @@
     if (version.current) currentIndex = i;
   });
 
-  /* The morph shapes the trigger animates through. */
+  /* The morph shapes the blob animates through. */
   var MORPHS = [
     "M0.412,0.004 C0.496,0.007,0.579,0.033,0.651,0.075 C0.72,0.115,0.789,0.168,0.818,0.241 C0.845,0.312,0.772,0.395,0.802,0.466 C0.839,0.556,0.992,0.584,1,0.681 C1,0.765,0.907,0.827,0.835,0.876 C0.77,0.921,0.687,0.925,0.61,0.948 C0.544,0.968,0.482,1,0.412,1 C0.343,0.998,0.292,0.943,0.228,0.919 C0.158,0.893,0.057,0.915,0.017,0.855 C-0.025,0.791,0.039,0.709,0.039,0.634 C0.039,0.576,0.022,0.522,0.018,0.465 C0.013,0.391,-0.015,0.315,0.011,0.244 C0.038,0.169,0.095,0.102,0.166,0.06 C0.238,0.017,0.327,0.002,0.412,0.004",
     "M0.545,0.068 C0.618,0.064,0.684,-0.011,0.756,0.008 C0.826,0.027,0.873,0.1,0.91,0.166 C0.945,0.229,0.959,0.302,0.963,0.375 C0.966,0.442,0.926,0.504,0.93,0.572 C0.937,0.673,1,0.768,0.997,0.863 C0.967,0.948,0.863,0.982,0.78,1 C0.701,1,0.622,0.985,0.545,0.963 C0.48,0.945,0.424,0.909,0.362,0.883 C0.296,0.854,0.223,0.845,0.167,0.8 C0.104,0.749,0.046,0.685,0.02,0.605 C-0.007,0.524,0.006,0.434,0.019,0.349 C0.032,0.26,0.035,0.157,0.097,0.096 C0.161,0.034,0.259,0.037,0.344,0.032 C0.413,0.028,0.476,0.072,0.545,0.068",
@@ -39,6 +39,8 @@
   var SVG_NS = "http://www.w3.org/2000/svg";
   var DURATION = 5;
   var WARP_MS = 900;
+  var REVEAL_MS = 900;
+  var CONCEAL_MS = 600;
   var NUDGE_KEY = "tm-nudged";
   var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -56,12 +58,116 @@
     return node;
   }
 
+  /* The blob's sky: the dust texture, which reads as stars at that size. */
   function sky() {
     var wrap = el("span", "tm-sky");
     wrap.setAttribute("aria-hidden", "true");
     wrap.appendChild(el("span", "tm-stars1"));
     wrap.appendChild(el("span", "tm-stars2"));
     wrap.appendChild(el("span", "tm-stars3"));
+    return wrap;
+  }
+
+  /*
+   * The overlay's sky: nebula, then three layers of real stars, far to near.
+   * Stretched across a whole screen the dust texture turns into soft blobs
+   * that read as plankton, so these are drawn as points instead.
+   */
+  var STAR_LAYERS = [
+    { name: "far", density: 0.00035, rMin: 0.3, rMax: 0.7, aMin: 0.25, aMax: 0.7 },
+    { name: "mid", density: 0.00008, rMin: 0.6, rMax: 1.1, aMin: 0.5, aMax: 0.9 },
+    { name: "near", density: 0.000015, rMin: 1, rMax: 1.6, aMin: 0.8, aMax: 1, glow: true },
+  ];
+  /* Most stars white, some faintly blue, a few warm. */
+  var STAR_TINTS = ["255,255,255", "255,255,255", "255,255,255", "200,220,255", "255,236,210"];
+  /* Each canvas overhangs the screen by this much, so parallax never shows an edge. */
+  var STAR_MARGIN = 60;
+
+  function starfield() {
+    var wrap = el("span", "tm-sky tm-starfield");
+    wrap.setAttribute("aria-hidden", "true");
+    wrap.appendChild(el("span", "tm-nebula"));
+    STAR_LAYERS.forEach(function (layer) {
+      wrap.appendChild(el("canvas", "tm-stars-" + layer.name));
+    });
+    return wrap;
+  }
+
+  function between(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  var starsDrawnFor = "";
+
+  function drawStars() {
+    var w = document.documentElement.clientWidth + STAR_MARGIN * 2;
+    var h = document.documentElement.clientHeight + STAR_MARGIN * 2;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var key = w + "x" + h + "@" + dpr;
+    if (key === starsDrawnFor) return;
+    starsDrawnFor = key;
+
+    STAR_LAYERS.forEach(function (layer) {
+      var canvas = overlay.querySelector(".tm-stars-" + layer.name);
+      if (!canvas || !canvas.getContext) return;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      var ctx = canvas.getContext("2d");
+      ctx.scale(dpr, dpr);
+
+      var count = Math.round(w * h * layer.density);
+      for (var s = 0; s < count; s++) {
+        var x = Math.random() * w;
+        var y = Math.random() * h;
+        var r = between(layer.rMin, layer.rMax);
+        var a = between(layer.aMin, layer.aMax);
+        var tint = STAR_TINTS[Math.floor(Math.random() * STAR_TINTS.length)];
+
+        if (layer.glow) {
+          var halo = ctx.createRadialGradient(x, y, 0, x, y, r * 6);
+          halo.addColorStop(0, "rgba(" + tint + "," + a * 0.35 + ")");
+          halo.addColorStop(1, "rgba(" + tint + ",0)");
+          ctx.fillStyle = halo;
+          ctx.fillRect(x - r * 6, y - r * 6, r * 12, r * 12);
+        }
+
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(" + tint + "," + a + ")";
+        ctx.fill();
+      }
+    });
+  }
+
+  var resizeTimer = 0;
+  window.addEventListener("resize", function () {
+    if (!isOpen()) return;
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(drawStars, 200);
+  });
+
+  /*
+   * The blob as a portal: a blurred halo behind a softly feathered body, the
+   * body holding the starfield, a slow swirl and a dark core. Both layers
+   * share the morph clip, and each is blurred by a wrapper around it, since a
+   * filter on the clipped element itself would be clipped back to a hard edge.
+   */
+  function portal() {
+    var wrap = el("span", "tm-portal");
+    wrap.setAttribute("aria-hidden", "true");
+
+    var glow = el("span", "tm-portal-glow");
+    glow.appendChild(el("span", "tm-portal-shape"));
+    wrap.appendChild(glow);
+
+    var body = el("span", "tm-portal-body");
+    var shape = el("span", "tm-portal-shape");
+    shape.appendChild(sky());
+    shape.appendChild(el("span", "tm-swirl"));
+    shape.appendChild(el("span", "tm-core"));
+    body.appendChild(shape);
+    wrap.appendChild(body);
+
     return wrap;
   }
 
@@ -77,7 +183,7 @@
   var root = el("div");
   root.id = "tm-root";
 
-  /* --- the clip path the trigger animates through --- */
+  /* --- the clip path the blob animates through --- */
   var svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("class", "tm-defs");
   svg.setAttribute("aria-hidden", "true");
@@ -98,27 +204,27 @@
   svg.appendChild(clip);
   root.appendChild(svg);
 
-  /* --- trigger --- */
+  /*
+   * --- the blob: the way in and, with the overlay open, the way back out ---
+   * It stays above the overlay, so the overlay opens out of it and closes
+   * back into it, and its hourglass turns over while it is open.
+   */
   var wrap = el("div", "tm-trigger-wrap");
 
   var trigger = el("button", "tm-trigger");
   trigger.type = "button";
-  trigger.setAttribute("aria-label", "Time travel");
   trigger.setAttribute("aria-haspopup", "dialog");
   trigger.setAttribute("aria-controls", "tm-overlay");
-  trigger.setAttribute("aria-expanded", "false");
-  trigger.appendChild(sky());
+  trigger.appendChild(portal());
   wrap.appendChild(trigger);
 
   var icon = el("span", "tm-trigger-icon", "⌛");
   icon.setAttribute("aria-hidden", "true");
   wrap.appendChild(icon);
 
-  var hint = el("span", "tm-hint", "Time travel");
+  var hint = el("span", "tm-hint");
   hint.setAttribute("aria-hidden", "true");
   wrap.appendChild(hint);
-
-  root.appendChild(wrap);
 
   /* --- overlay --- */
   var overlay = el("div", "tm-overlay");
@@ -126,16 +232,13 @@
   overlay.setAttribute("role", "dialog");
   overlay.setAttribute("aria-modal", "true");
   overlay.setAttribute("aria-labelledby", "tm-title");
-  overlay.appendChild(sky());
-
-  var close = el("button", "tm-close", "Close");
-  close.type = "button";
-  overlay.appendChild(close);
+  overlay.appendChild(starfield());
 
   var stage = el("div", "tm-stage");
 
   var title = el("h2", "tm-title");
   title.id = "tm-title";
+  title.style.setProperty("--tm-i", "0");
   title.appendChild(el("span", null, "Time Travel"));
   stage.appendChild(title);
 
@@ -143,6 +246,9 @@
   var timeline = el("ol", "tm-timeline");
   var entries = versions.map(function (version, i) {
     var item = el("li", version.current ? "tm-current" : null);
+    item.style.setProperty("--tm-i", String(i + 1));
+    if (typeof version.hue === "number") item.style.setProperty("--tm-hue", String(version.hue));
+
     var link = el("a", "tm-entry");
     link.href = version.href;
     if (version.current) link.setAttribute("aria-current", "page");
@@ -152,9 +258,13 @@
 
     link.appendChild(el("span", "tm-here", version.current ? "You are here" : ""));
 
+    /* Glow, swirling disk, tunnel rings and a dark core, back to front. */
     var hole = el("span", "tm-wormhole");
     hole.setAttribute("aria-hidden", "true");
+    hole.appendChild(el("span", "tm-wh-glow"));
+    hole.appendChild(el("span", "tm-wh-disk"));
     for (var r = 0; r < 4; r++) hole.appendChild(document.createElement("i"));
+    hole.appendChild(el("span", "tm-wh-core"));
     link.appendChild(hole);
 
     link.appendChild(el("span", "tm-name", version.name));
@@ -182,9 +292,10 @@
   });
   stage.appendChild(timeline);
 
-  /* --- preview: what's on the other side of the wormhole --- */
+  /* --- preview: what's on the other side of the portal --- */
   var preview = el("div", "tm-preview");
   preview.setAttribute("aria-hidden", "true");
+  preview.style.setProperty("--tm-i", String(versions.length + 1));
   var thumb = el("img", "tm-thumb");
   thumb.alt = "";
   thumb.width = 240;
@@ -205,6 +316,8 @@
 
   overlay.appendChild(stage);
   root.appendChild(overlay);
+  /* After the overlay, so the blob paints above it. */
+  root.appendChild(wrap);
 
   document.body.appendChild(root);
 
@@ -228,21 +341,48 @@
   /* --- open / close --- */
   var thumbsLoaded = false;
   var savedOverflow = "";
+  var phaseTimer = 0;
 
   function isOpen() {
     return root.classList.contains("tm-open");
   }
 
+  function labelTrigger(open) {
+    trigger.setAttribute("aria-expanded", String(open));
+    trigger.setAttribute("aria-label", open ? "Close time travel" : "Time travel");
+    hint.textContent = open ? "Back to the present" : "Time travel";
+  }
+  labelTrigger(false);
+
+  /* The overlay grows out of the blob and collapses back into it. */
+  function aimAtBlob() {
+    var rect = wrap.getBoundingClientRect();
+    overlay.style.setProperty("--tm-x", rect.left + rect.width / 2 + "px");
+    overlay.style.setProperty("--tm-y", rect.top + rect.height / 2 + "px");
+  }
+
+  function setPhase(phase, ms) {
+    window.clearTimeout(phaseTimer);
+    root.classList.remove("tm-opening", "tm-closing");
+    if (!phase || reducedMotion.matches) return;
+    root.classList.add(phase);
+    phaseTimer = window.setTimeout(function () {
+      root.classList.remove(phase);
+    }, ms);
+  }
+
   function setOpen(open) {
     if (open === isOpen()) return;
     root.classList.toggle("tm-open", open);
-    trigger.setAttribute("aria-expanded", String(open));
+    labelTrigger(open);
+    aimAtBlob();
 
     if (open) {
       endNudge();
       store("localStorage", "setItem", NUDGE_KEY, "1");
       savedOverflow = document.documentElement.style.overflow;
       document.documentElement.style.overflow = "hidden";
+      drawStars();
       showPreview(currentIndex);
       if (!thumbsLoaded) {
         thumbsLoaded = true;
@@ -250,18 +390,17 @@
           new Image().src = version.thumb;
         });
       }
-      close.focus();
+      setPhase("tm-opening", REVEAL_MS + versions.length * 50);
+      entries[currentIndex].link.focus({ preventScroll: true });
     } else {
       document.documentElement.style.overflow = savedOverflow;
-      trigger.focus();
+      setPhase("tm-closing", CONCEAL_MS);
+      trigger.focus({ preventScroll: true });
     }
   }
 
   trigger.addEventListener("click", function () {
     setOpen(!isOpen());
-  });
-  close.addEventListener("click", function () {
-    setOpen(false);
   });
 
   /* Load the overlay's font as soon as someone looks like they'll open it. */
@@ -284,16 +423,19 @@
     }
 
     if (event.key === "Tab") {
-      var stops = [close].concat(entries.map(function (entry) {
-        return entry.link;
-      }));
+      /* The blob sits outside the dialog's DOM but is its way out, so it's in the loop. */
+      var stops = entries
+        .map(function (entry) {
+          return entry.link;
+        })
+        .concat(trigger);
       var first = stops[0];
       var last = stops[stops.length - 1];
-      var inside = overlay.contains(document.activeElement);
-      if (event.shiftKey && (document.activeElement === first || !inside)) {
+      var at = stops.indexOf(document.activeElement);
+      if (event.shiftKey && (at <= 0)) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !inside)) {
+      } else if (!event.shiftKey && (at === -1 || at === stops.length - 1)) {
         event.preventDefault();
         first.focus();
       }
@@ -301,15 +443,28 @@
     }
 
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-      var at = -1;
+      var index = -1;
       entries.forEach(function (entry, i) {
-        if (entry.link === document.activeElement) at = i;
+        if (entry.link === document.activeElement) index = i;
       });
-      if (at === -1) return;
+      if (index === -1) return;
       event.preventDefault();
-      var next = event.key === "ArrowLeft" ? at - 1 : at + 1;
+      var next = event.key === "ArrowLeft" ? index - 1 : index + 1;
       entries[(next + entries.length) % entries.length].link.focus();
     }
+  });
+
+  /* --- the starfield drifts against the pointer, nearer layers further --- */
+  var parallaxFrame = 0;
+  overlay.addEventListener("pointermove", function (event) {
+    if (reducedMotion.matches || parallaxFrame) return;
+    parallaxFrame = window.requestAnimationFrame(function () {
+      parallaxFrame = 0;
+      var w = document.documentElement.clientWidth || 1;
+      var h = document.documentElement.clientHeight || 1;
+      overlay.style.setProperty("--tm-px", (event.clientX / w - 0.5).toFixed(3));
+      overlay.style.setProperty("--tm-py", (event.clientY / h - 0.5).toFixed(3));
+    });
   });
 
   /* --- travel --- */
@@ -360,6 +515,7 @@
     warp.style.top = cy + "px";
     warp.style.width = rect.width + "px";
     warp.style.height = rect.height + "px";
+    if (typeof versions[i].hue === "number") warp.style.setProperty("--tm-hue", String(versions[i].hue));
     root.appendChild(warp);
 
     var scale = (far * 2) / rect.width + 1;
@@ -386,6 +542,7 @@
     if (warp) warp.remove();
     document.documentElement.classList.remove("tm-arriving");
     if (isOpen()) setOpen(false);
+    setPhase(null);
   });
 
   /* --- arrival: the head script covered the page; lift it once it has played --- */

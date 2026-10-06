@@ -33,6 +33,7 @@ export function timeMachineData(currentSlug: string): string {
       blurb: version.blurb,
       href: versionHref(version.slug),
       thumb: `/_tm/thumbs/${version.slug}.png`,
+      hue: version.hue,
       current: version.slug === currentSlug,
     })),
   ).replace(/</g, "\\u003c");

@@ -25,21 +25,26 @@
   src: url("/_tm/fonts/lato-700.woff2") format("woff2");
 }
 
+/* Animated by the reveal, the conceal and the arrival: each a soft-edged hole. */
+@property --tm-open {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
 #tm-root {
   --tm-size: 120px;
+  --tm-hue: 250;
   --tm-ink: #0b0f1a;
   --tm-sky: radial-gradient(ellipse at center, #1b2735 0%, #27272a 100%);
-  --tm-hole: radial-gradient(circle, #000 0%, var(--tm-ink) 35%, #16213e 65%, #1b2735 100%);
   font-family: system-ui, sans-serif;
 }
 
-/* ---------- trigger ---------- */
+/* ---------- the blob ---------- */
 
 /*
- * The emoji cannot live inside the button: the button is clipped to the morph
- * shape and would clip the glyph with it. So both sit in a box of the blob's
- * size and each fills it, which centres the emoji without depending on the
- * glyph's own metrics.
+ * The emoji sits beside the button rather than in it, filling the same box,
+ * which centres it without depending on the glyph's own metrics.
  */
 .tm-trigger-wrap {
   position: fixed;
@@ -50,6 +55,12 @@
   height: var(--tm-size);
   transform-origin: bottom left;
   transition: transform 0.3s ease;
+}
+
+/* With the overlay open the blob stays on top of it: the way back out. */
+#tm-root.tm-open .tm-trigger-wrap,
+#tm-root.tm-closing .tm-trigger-wrap {
+  z-index: 2147483003;
 }
 
 /*
@@ -74,26 +85,14 @@
   height: 100%;
   padding: 0;
   border: 0;
+  border-radius: 50%;
   background: transparent;
   cursor: pointer;
-  clip-path: url(#tm-clip);
-  transition: filter 0.3s;
-}
-
-.tm-trigger:hover,
-.tm-trigger:focus-visible {
-  filter: brightness(1.5);
 }
 
 .tm-trigger:focus-visible {
-  outline: none;
-}
-
-/* The clip hides an outline on the button, so the ring goes on the box. */
-.tm-trigger-wrap:has(.tm-trigger:focus-visible) {
   outline: 2px solid rgba(255, 255, 255, 0.8);
-  outline-offset: 4px;
-  border-radius: 50%;
+  outline-offset: 6px;
 }
 
 .tm-trigger-icon {
@@ -107,7 +106,7 @@
   line-height: 1;
   pointer-events: none;
   user-select: none;
-  transition: transform 0.3s, filter 0.3s;
+  transition: transform 0.3s, filter 0.3s, rotate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .tm-trigger:hover ~ .tm-trigger-icon,
@@ -116,16 +115,22 @@
   filter: brightness(1.1);
 }
 
+/* Turned over while open: the sand runs back to the present. */
+#tm-root.tm-open .tm-trigger-icon {
+  rotate: 180deg;
+}
+
 /* What the blob is, for anyone who hasn't met it yet. */
 .tm-hint {
   position: absolute;
   top: 50%;
-  left: calc(100% + 10px);
+  left: calc(100% + 14px);
   padding: 6px 12px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.75);
   color: #fff;
   font-size: 13px;
+  line-height: 1.4;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
@@ -161,9 +166,95 @@
   height: 0;
 }
 
+/* ---------- the blob as a portal ---------- */
+
+/*
+ * Two copies of the morphing shape. The halo is blurred hard and tinted; the
+ * body is blurred just enough to feather its edge. The blur sits on wrappers,
+ * because a filter on the clipped element would be clipped back to a hard edge.
+ */
+.tm-portal {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tm-portal-shape {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: url(#tm-clip);
+}
+
+.tm-portal-glow {
+  position: absolute;
+  inset: -14%;
+  filter: blur(14px);
+  opacity: 0.7;
+  transition: opacity 0.4s, scale 0.4s;
+}
+
+.tm-portal-glow .tm-portal-shape {
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--tm-hue) 90% 65%),
+    hsl(calc(var(--tm-hue) + 70) 90% 60%),
+    hsl(calc(var(--tm-hue) - 50) 90% 65%),
+    hsl(var(--tm-hue) 90% 65%)
+  );
+  animation: tm-spin 9s linear infinite;
+}
+
+.tm-portal-body {
+  position: absolute;
+  inset: 0;
+  filter: blur(1.2px);
+  transition: filter 0.3s;
+}
+
+.tm-trigger:hover .tm-portal-glow,
+.tm-trigger:focus-visible .tm-portal-glow,
+#tm-root.tm-open .tm-portal-glow {
+  opacity: 1;
+  scale: 1.08;
+}
+
+.tm-trigger:hover .tm-portal-body,
+.tm-trigger:focus-visible .tm-portal-body {
+  filter: blur(1.2px) brightness(1.35);
+}
+
+/* A slow swirl of colour, as if the shape were turning. */
+.tm-swirl {
+  position: absolute;
+  inset: -30%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 8%,
+    hsl(var(--tm-hue) 90% 70% / 0.55) 18%,
+    transparent 32%,
+    hsl(calc(var(--tm-hue) + 70) 90% 65% / 0.45) 52%,
+    transparent 68%,
+    hsl(calc(var(--tm-hue) - 50) 90% 70% / 0.5) 84%,
+    transparent 96%
+  );
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  animation: tm-spin 7s linear infinite;
+}
+
+/* Depth: the middle falls away into the dark. */
+.tm-core {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.92) 0 16%, rgba(4, 6, 18, 0.6) 36%, transparent 62%);
+}
+
 /* ---------- overlay ---------- */
 
 .tm-overlay {
+  --tm-x: 50%;
+  --tm-y: 50%;
   position: fixed;
   inset: 0;
   z-index: 2147483002;
@@ -172,8 +263,70 @@
   color: #fff;
 }
 
-#tm-root.tm-open .tm-overlay {
+#tm-root.tm-open .tm-overlay,
+#tm-root.tm-closing .tm-overlay {
   display: block;
+}
+
+/*
+ * Opening, the overlay grows out of the blob as a soft-edged circle;
+ * closing, it shrinks back into it.
+ */
+#tm-root.tm-opening .tm-overlay,
+#tm-root.tm-closing .tm-overlay {
+  -webkit-mask-image: radial-gradient(circle at var(--tm-x) var(--tm-y), #000 var(--tm-open), transparent calc(var(--tm-open) + 18%));
+  mask-image: radial-gradient(circle at var(--tm-x) var(--tm-y), #000 var(--tm-open), transparent calc(var(--tm-open) + 18%));
+}
+
+#tm-root.tm-opening .tm-overlay {
+  animation: tm-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#tm-root.tm-closing .tm-overlay {
+  pointer-events: none;
+  animation: tm-conceal 0.6s cubic-bezier(0.64, 0, 0.78, 0) both;
+}
+
+@keyframes tm-reveal {
+  from { --tm-open: -18%; }
+  to { --tm-open: 110%; }
+}
+
+@keyframes tm-conceal {
+  from { --tm-open: 110%; }
+  to { --tm-open: -18%; }
+}
+
+/* ...and its contents materialise one after another, out of a blur. */
+#tm-root.tm-opening .tm-title,
+#tm-root.tm-opening .tm-timeline > li,
+#tm-root.tm-opening .tm-preview {
+  animation: tm-materialise 0.7s ease-out both;
+  animation-delay: calc(var(--tm-i, 0) * 50ms + 150ms);
+}
+
+/* The line draws itself from the past toward the present as the portals arrive. */
+#tm-root.tm-opening .tm-timeline::before {
+  transform-origin: left;
+  animation: tm-draw 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+@keyframes tm-draw {
+  from { scale: 0 1; }
+  to { scale: 1 1; }
+}
+
+@keyframes tm-materialise {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    translate: 0 14px;
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    translate: 0 0;
+  }
 }
 
 /* Fills at least the screen and grows with its content, so tall content scrolls rather than clips. */
@@ -185,32 +338,8 @@
   align-items: center;
   justify-content: center;
   gap: 40px;
-  padding: 64px 24px;
+  padding: 64px 24px 150px;
   box-sizing: border-box;
-}
-
-.tm-close {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 2;
-  padding: 8px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.6);
-  color: rgba(255, 255, 255, 0.85);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.tm-close:hover {
-  color: #fff;
-}
-
-.tm-close:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.8);
-  outline-offset: 2px;
 }
 
 /* ---------- starfield ---------- */
@@ -223,11 +352,38 @@
   background: var(--tm-sky);
 }
 
-/* The trigger's sky fills the blob, not the screen. */
-.tm-trigger .tm-sky {
+/* The blob's sky fills the blob, not the screen. */
+.tm-portal .tm-sky {
   position: absolute;
 }
 
+/* Darker towards the edges, so the eye settles on the timeline. */
+.tm-overlay > .tm-sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.6) 100%);
+}
+
+/* Faint clouds of colour, drifting. */
+.tm-nebula {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(ellipse 40% 32% at 22% 30%, hsl(265 70% 45% / 0.28), transparent 70%),
+    radial-gradient(ellipse 36% 40% at 78% 68%, hsl(195 80% 45% / 0.2), transparent 70%),
+    radial-gradient(ellipse 30% 26% at 62% 22%, hsl(320 70% 50% / 0.14), transparent 70%),
+    radial-gradient(ellipse 34% 28% at 30% 80%, hsl(220 80% 50% / 0.14), transparent 70%);
+  filter: blur(20px);
+  animation: tm-drift 40s ease-in-out infinite alternate;
+}
+
+@keyframes tm-drift {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.08); }
+}
+
+/* The blob's sky: the dust texture drifting, small enough to read as stars. */
 .tm-stars1,
 .tm-stars2,
 .tm-stars3 {
@@ -264,16 +420,51 @@
   to { transform: translate3d(-50%, -50%, 0); }
 }
 
+/*
+ * The overlay's sky: stars drawn on three canvases, far to near. Each
+ * overhangs the screen by the script's STAR_MARGIN and follows the pointer,
+ * nearer layers further.
+ */
+.tm-starfield canvas {
+  position: absolute;
+  top: -60px;
+  left: -60px;
+  width: calc(100% + 120px);
+  height: calc(100% + 120px);
+  transition: translate 0.6s ease-out;
+}
+
+.tm-stars-far {
+  translate: calc(var(--tm-px, 0) * -10px) calc(var(--tm-py, 0) * -10px);
+}
+
+.tm-stars-mid {
+  translate: calc(var(--tm-px, 0) * -24px) calc(var(--tm-py, 0) * -24px);
+  animation: tm-twinkle 5s ease-in-out infinite alternate;
+}
+
+.tm-stars-near {
+  translate: calc(var(--tm-px, 0) * -48px) calc(var(--tm-py, 0) * -48px);
+  animation: tm-twinkle 7s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes tm-twinkle {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
 /* ---------- title ---------- */
 
 .tm-title {
   position: relative;
   margin: 0;
   padding-left: 10px;
+  color: #fff;
   text-align: center;
   font-family: "tm-lato", system-ui, sans-serif;
   font-weight: 300;
   font-size: clamp(32px, 5vw, 50px);
+  line-height: 1.2;
   letter-spacing: 10px;
 }
 
@@ -309,6 +500,7 @@
   right: calc(100% / 16);
   height: 2px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.45));
+  box-shadow: 0 0 8px rgba(160, 190, 255, 0.25);
 }
 
 .tm-entry {
@@ -328,6 +520,7 @@
   height: var(--tm-here);
   color: rgba(255, 255, 255, 0.7);
   font-size: 11px;
+  line-height: var(--tm-here);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -350,6 +543,7 @@
 
 .tm-date {
   font-size: clamp(11px, 1vw, 14px);
+  line-height: 1.4;
   color: rgba(255, 255, 255, 0.2);
   transition: color 0.3s;
 }
@@ -368,15 +562,15 @@
 
 .tm-entry:focus-visible .tm-wormhole {
   outline: 2px solid rgba(255, 255, 255, 0.8);
-  outline-offset: 4px;
+  outline-offset: 8px;
 }
 
-/* ---------- wormhole ---------- */
+/* ---------- portals on the timeline ---------- */
 
 /*
- * The rings spin and shrink with rotate and scale, which the compositor
- * handles alone; animating width and height would lay the page out again on
- * every frame.
+ * Back to front: a breathing halo in the version's colour, a swirling disk,
+ * tunnel rings falling inward, and a dark core. Everything animates rotate,
+ * scale and opacity, which the compositor handles alone.
  */
 .tm-wormhole {
   position: relative;
@@ -386,7 +580,13 @@
   width: var(--tm-wh);
   height: var(--tm-wh);
   border-radius: 50%;
-  background: var(--tm-hole);
+  background: radial-gradient(
+    circle,
+    #000 0%,
+    hsl(var(--tm-hue) 60% 7%) 42%,
+    hsl(var(--tm-hue) 55% 16%) 66%,
+    transparent 71%
+  );
   transition: scale 0.3s ease;
 }
 
@@ -395,36 +595,92 @@
   scale: 1.1;
 }
 
-.tm-current .tm-wormhole {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5), 0 0 24px 4px rgba(120, 160, 255, 0.35);
+.tm-wh-glow {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 42%, hsl(var(--tm-hue) 90% 60% / 0.55) 56%, transparent 72%);
+  filter: blur(8px);
+  opacity: 0.55;
+  animation: tm-breathe 3.2s ease-in-out infinite alternate;
+  transition: opacity 0.3s;
+}
+
+.tm-entry:hover .tm-wh-glow,
+.tm-entry:focus-visible .tm-wh-glow,
+.tm-current .tm-wh-glow {
+  opacity: 1;
+}
+
+@keyframes tm-breathe {
+  from { scale: 0.95; }
+  to { scale: 1.06; }
+}
+
+.tm-wh-disk {
+  position: absolute;
+  inset: -4%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--tm-hue) 90% 72% / 0.85),
+    transparent 22%,
+    hsl(calc(var(--tm-hue) + 50) 90% 68% / 0.6) 40%,
+    transparent 58%,
+    hsl(calc(var(--tm-hue) - 40) 90% 72% / 0.7) 76%,
+    transparent 92%,
+    hsl(var(--tm-hue) 90% 72% / 0.85)
+  );
+  -webkit-mask-image: radial-gradient(circle, transparent 34%, #000 52%, #000 62%, transparent 71%);
+  mask-image: radial-gradient(circle, transparent 34%, #000 52%, #000 62%, transparent 71%);
+  filter: blur(2px);
+  mix-blend-mode: screen;
+  animation: tm-spin 6s linear infinite;
+}
+
+.tm-entry:hover .tm-wh-disk,
+.tm-entry:focus-visible .tm-wh-disk {
+  animation-duration: 2.5s;
 }
 
 .tm-wormhole i {
   position: absolute;
-  inset: 0;
+  inset: 10%;
   border-radius: 50%;
-  box-shadow: inset 0 0 20px 5px rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid hsl(var(--tm-hue) 80% 80% / 0.3);
+  box-shadow: inset 0 0 16px 3px hsl(var(--tm-hue) 80% 70% / 0.25);
   background-image: url("/_tm/stardust.png");
   animation: tm-spin 3s linear infinite;
 }
 
-.tm-wormhole i:nth-child(2) {
+.tm-wormhole i:nth-child(4) {
   opacity: 0.5;
   background-position: 75% 50%;
-  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in-out infinite -0.4s;
+  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in infinite -0.4s;
 }
 
-.tm-wormhole i:nth-child(3) {
+.tm-wormhole i:nth-child(5) {
   opacity: 0.75;
   background-position: 25% 0%;
-  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in-out infinite -1.1s;
+  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in infinite -1.1s;
 }
 
-.tm-wormhole i:nth-child(4) {
+.tm-wormhole i:nth-child(6) {
   opacity: 0.25;
   background-position: 50% 33%;
-  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in-out infinite -1.7s;
+  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in infinite -1.7s;
+}
+
+.tm-wh-core {
+  position: absolute;
+  inset: 32%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #000 45%, transparent 75%);
+  box-shadow: 0 0 14px 6px rgba(0, 0, 0, 0.8);
+}
+
+.tm-current .tm-wormhole {
+  box-shadow: 0 0 0 1px hsl(var(--tm-hue) 80% 80% / 0.5);
 }
 
 @keyframes tm-spin {
@@ -469,12 +725,14 @@
   font-family: "tm-lato", system-ui, sans-serif;
   font-size: 22px;
   font-weight: 700;
+  line-height: 1.3;
 }
 
 .tm-preview-date {
   margin: 2px 0 8px;
   color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
+  line-height: 1.4;
 }
 
 .tm-preview-blurb {
@@ -495,22 +753,24 @@
 
 /* ---------- departure ---------- */
 
-/* Everything but the chosen wormhole falls away... */
+/* Everything but the chosen portal falls away... */
 #tm-root.tm-departing .tm-title,
 #tm-root.tm-departing .tm-preview,
-#tm-root.tm-departing .tm-close,
+#tm-root.tm-departing .tm-trigger-wrap,
 #tm-root.tm-departing .tm-timeline::before,
 #tm-root.tm-departing .tm-timeline > li:not(.tm-chosen) {
   opacity: 0;
   transition: opacity 0.3s;
 }
 
-/* ...and the warp grows out of it until the screen is inside the wormhole. */
+/* ...and the warp grows out of it, in its colour, until the screen is inside it. */
 .tm-warp {
   position: fixed;
   z-index: 2147483004;
   border-radius: 50%;
-  background: url("/_tm/stardust.png"), var(--tm-hole);
+  background:
+    url("/_tm/stardust.png"),
+    radial-gradient(circle, #000 0%, var(--tm-ink) 35%, hsl(var(--tm-hue) 55% 14%) 62%, hsl(var(--tm-hue) 70% 32%) 100%);
   pointer-events: none;
   translate: -50% -50%;
 }
@@ -522,19 +782,13 @@
  * page starts covered, the colour the warp ended on. A hole then opens from
  * the centre and the page comes through it.
  */
-@property --tm-open {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 0%;
-}
-
 html.tm-arriving::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 2147483646;
   pointer-events: none;
-  background: url("/_tm/stardust.png"), var(--tm-ink);
+  background: url("/_tm/stardust.png"), var(--tm-ink, #0b0f1a);
   -webkit-mask-image: radial-gradient(circle, transparent var(--tm-open), #000 calc(var(--tm-open) + 12%));
   mask-image: radial-gradient(circle, transparent var(--tm-open), #000 calc(var(--tm-open) + 12%));
   animation: tm-arrive 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
@@ -587,14 +841,22 @@ html.tm-arriving::after {
   .tm-stars1,
   .tm-stars2,
   .tm-stars3,
+  .tm-starfield canvas,
+  .tm-nebula,
+  .tm-swirl,
+  .tm-portal-glow .tm-portal-shape,
   .tm-wormhole i,
+  .tm-wh-glow,
+  .tm-wh-disk,
   #tm-root.tm-nudge .tm-trigger,
   #tm-root.tm-nudge .tm-trigger-icon {
     animation: none;
   }
 
   .tm-trigger-wrap,
-  .tm-wormhole {
+  .tm-trigger-icon,
+  .tm-wormhole,
+  .tm-starfield canvas {
     transition: none;
   }
 
