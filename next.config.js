@@ -15,6 +15,7 @@ const SHELL_ROUTES = [
   "robots[.]txt",
   "sitemap[.]xml",
   "_tm/", // the time machine widget's own assets
+  "_vercel/", // web analytics script and its collection endpoints
   "_next/",
   "api/",
 ];

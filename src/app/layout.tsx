@@ -1,5 +1,6 @@
 import "~/styles/globals.css";
 
+import { Analytics } from "@vercel/analytics/next";
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 
@@ -31,7 +32,14 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/*
+          Only the shell's own pages reach this layout. The portfolio the proxy
+          serves at the apex carries its own copy of the script.
+        */}
+        <Analytics />
+      </body>
     </html>
   );
 }
