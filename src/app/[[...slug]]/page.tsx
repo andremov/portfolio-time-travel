@@ -1,7 +1,10 @@
 import { type Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import TimeTravel from "./time-travel";
+import Script from "next/script";
+import FramedVersion from "./framed-version";
 import { resolveRoute } from "~/lib/resolve-route";
+import { TM_LINK_TEXT, TM_SCRIPT, timeMachineData } from "~/lib/time-machine";
 import { fetchUpstream } from "~/lib/upstream-metadata";
 
 interface PageProps {
@@ -48,5 +51,19 @@ export default async function ArchivedVersionPage({ params }: PageProps) {
     if (status !== null && status >= 400) notFound();
   }
 
-  return <TimeTravel versionSlug={route.version.slug} iframeSrc={route.iframeSrc} />;
+  return (
+    <>
+      <FramedVersion versionSlug={route.version.slug} iframeSrc={route.iframeSrc} />
+      {/* The time machine's body half; the root layout carries its head half. */}
+      <script
+        type="application/json"
+        id="tm-versions"
+        dangerouslySetInnerHTML={{ __html: timeMachineData(route.version.slug) }}
+      />
+      <Link className="tm-link" href="/versions/">
+        {TM_LINK_TEXT}
+      </Link>
+      <Script src={TM_SCRIPT} strategy="afterInteractive" />
+    </>
+  );
 }

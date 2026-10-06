@@ -1,6 +1,11 @@
 import { type NextRequest } from "next/server";
-import { DEFAULT_VERSION, findVersion, history } from "~/data/history";
-import { versionHref } from "~/lib/resolve-route";
+import { DEFAULT_VERSION, findVersion } from "~/data/history";
+import {
+  TM_LINK_TEXT,
+  TM_SCRIPT,
+  TM_STYLESHEET,
+  timeMachineData,
+} from "~/lib/time-machine";
 
 /**
  * Serve the current portfolio as the apex's own response.
@@ -16,31 +21,19 @@ const UPSTREAM = findVersion(DEFAULT_VERSION)!.link;
 const UPSTREAM_ORIGIN = new URL(UPSTREAM).origin;
 
 /**
- * The version list travels with the widget as data, so history.ts stays the
- * one place versions are declared. Escaping "<" keeps a name from ever
- * closing the script tag early.
- */
-const VERSIONS_JSON = JSON.stringify(
-  history.map((version) => ({
-    name: version.name,
-    date: version.date,
-    href: versionHref(version.slug),
-    current: version.slug === DEFAULT_VERSION,
-  })),
-).replace(/</g, "\\u003c");
-
-/**
- * The time machine, injected into every page the portfolio serves.
+ * The time machine, injected into every page the portfolio serves: the
+ * stylesheet in <head>, the rest at the end of <body>.
  *
  * The link out is a real anchor rather than something the script builds, so
  * the archive stays reachable — by a crawler, or by anyone whose JavaScript
  * never runs — without depending on the widget booting.
  */
-const WIDGET =
-  `<script type="application/json" id="tm-versions">${VERSIONS_JSON}</script>` +
-  '<link rel="stylesheet" href="/_tm/time-machine.css">' +
-  '<a class="tm-link" href="/versions">All versions →</a>' +
-  '<script src="/_tm/time-machine.js" defer></script>';
+const WIDGET_HEAD = `<link rel="stylesheet" href="${TM_STYLESHEET}">`;
+
+const WIDGET_BODY =
+  `<script type="application/json" id="tm-versions">${timeMachineData(DEFAULT_VERSION)}</script>` +
+  `<a class="tm-link" href="/versions/">${TM_LINK_TEXT}</a>` +
+  `<script src="${TM_SCRIPT}" defer></script>`;
 
 /**
  * Connection-level headers describe the upstream hop, not our response, and
@@ -119,10 +112,13 @@ async function proxy(request: NextRequest, method: "GET" | "HEAD") {
     return new Response(upstream.body, { status: upstream.status, headers });
   }
 
-  const html = await upstream.text();
-  const body = html.includes("</body>")
-    ? html.replace("</body>", `${WIDGET}</body>`)
-    : html + WIDGET;
+  let body = await upstream.text();
+  body = body.includes("</head>")
+    ? body.replace("</head>", `${WIDGET_HEAD}</head>`)
+    : WIDGET_HEAD + body;
+  body = body.includes("</body>")
+    ? body.replace("</body>", `${WIDGET_BODY}</body>`)
+    : body + WIDGET_BODY;
 
   headers.set("cache-control", HTML_CACHE);
 

@@ -5,6 +5,7 @@ import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 
 import { SITE_URL } from "~/lib/site";
+import { TM_STYLESHEET } from "~/lib/time-machine";
 
 export const metadata: Metadata = {
   title: "Andrés Movilla — Portfolio Time Travel",
@@ -32,6 +33,13 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
+      <head>
+        {/*
+          The time machine's head half, for the archived versions this layout
+          frames. The body half is rendered by the archive route.
+        */}
+        <link rel="stylesheet" href={TM_STYLESHEET} />
+      </head>
       <body>
         {children}
         {/*
