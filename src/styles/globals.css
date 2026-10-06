@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* The time travel overlay shrinks its wormholes to fit four across on a tablet. */
+:root {
+  --wormhole-size: 120px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --wormhole-size: 200px;
+  }
+}
 
 .star-bkg {
   background: radial-gradient(ellipse at center, #1b2735 0%, #27272a 100%);
@@ -74,8 +84,8 @@
 }
 
 .wormhole-container {
-  width: 200px;
-  height: 200px;
+  width: var(--wormhole-size);
+  height: var(--wormhole-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -94,8 +104,8 @@
 .wormhole3,
 .wormhole4 {
   position: absolute;
-  width: 200px;
-  height: 200px;
+  width: var(--wormhole-size);
+  height: var(--wormhole-size);
   border-radius: 50%;
   box-shadow: inset 0 0 20px 5px rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -144,8 +154,8 @@
 
 @keyframes resize {
   0% {
-    width: 200px;
-    height: 200px;
+    width: var(--wormhole-size);
+    height: var(--wormhole-size);
     opacity: 1;
   }
   99% {
@@ -159,8 +169,8 @@
     opacity: 0;
   }
   100% {
-    width: 200px;
-    height: 200px;
+    width: var(--wormhole-size);
+    height: var(--wormhole-size);
     opacity: 0;
   }
 }

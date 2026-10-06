@@ -36,7 +36,8 @@ export default function TimeTravel({ versionSlug, iframeSrc }: TimeTravelProps) 
     <main className="relative">
       <SuperFrame src={iframeSrc} onNavMessage={handleNavMessage} />
 
-      <div className="hidden lg:block">
+      {/* The blob on tablet and up, the pill on phones — never both. */}
+      <div className="hidden md:block">
         <Morph
           duration={5}
           buttonBackground={<SpaceBackground />}
@@ -47,7 +48,7 @@ export default function TimeTravel({ versionSlug, iframeSrc }: TimeTravelProps) 
         </Morph>
       </div>
 
-      <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 lg:left-auto lg:right-4 lg:translate-x-0">
+      <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 md:hidden">
         <Link
           href="/versions"
           className="rounded-full bg-black/70 px-4 py-2 text-xs text-white/85 backdrop-blur-sm transition hover:bg-black/85 hover:text-white"

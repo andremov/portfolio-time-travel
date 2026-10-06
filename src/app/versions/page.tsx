@@ -74,8 +74,8 @@ export default function VersionsPage() {
         </p>
         <p className="mt-4 text-white/60">
           The live site also has a time machine that flies you between versions
-          through a wormhole. It needs the room, so it only appears on desktop —
-          on a phone or tablet, this list is the way across.
+          through a wormhole. It needs the room, so it only appears on tablets
+          and desktops — on a phone, this list is the way across.
         </p>
 
         <ol className="mt-10 space-y-6">
