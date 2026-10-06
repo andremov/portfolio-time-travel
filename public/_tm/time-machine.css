@@ -1,17 +1,36 @@
 /*
- * The time machine, as a standalone widget.
+ * The time machine: one widget on every page that shows a version. The proxy
+ * injects it into the live portfolio and the archive route renders it around
+ * its frame, so neither page has a React tree of ours to hook into. See
+ * src/lib/time-machine.ts for how it is wired in.
  *
- * The apex serves the current portfolio's own HTML, so there is no React tree
- * of ours on those pages. This is a plain-CSS port of the overlay in
- * src/_components/, injected by the proxy. Everything is prefixed tm- so it
- * cannot collide with whatever the portfolio itself styles.
- *
- * Never use 100vw here: it includes the scrollbar gutter and would overflow
- * the page sideways.
+ * Everything is prefixed tm- so it cannot collide with whatever the portfolio
+ * itself styles. Never use 100vw here: it includes the scrollbar gutter and
+ * would overflow the page sideways.
  */
+
+@font-face {
+  font-family: "tm-lato";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/_tm/fonts/lato-300.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "tm-lato";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/_tm/fonts/lato-700.woff2") format("woff2");
+}
 
 #tm-root {
   --tm-size: 120px;
+  --tm-ink: #0b0f1a;
+  --tm-sky: radial-gradient(ellipse at center, #1b2735 0%, #27272a 100%);
+  --tm-hole: radial-gradient(circle, #000 0%, var(--tm-ink) 35%, #16213e 65%, #1b2735 100%);
+  font-family: system-ui, sans-serif;
 }
 
 /* ---------- trigger ---------- */
@@ -29,17 +48,23 @@
   z-index: 2147483000;
   width: var(--tm-size);
   height: var(--tm-size);
+  transform-origin: bottom left;
+  transition: transform 0.3s ease;
 }
 
 /*
- * Tablet and up, like the React version on the archived routes (Tailwind's
- * md). On a phone the blob covers too much of the page, so the tm-link to
- * /versions takes its place there.
+ * Tablet and up. On a phone the blob covers too much of the page, so the
+ * tm-link to /versions takes its place there.
  */
 @media (max-width: 767.98px) {
   .tm-trigger-wrap {
     display: none;
   }
+}
+
+/* Out of the way while the page scrolls; back once it settles. */
+#tm-root.tm-scrolling .tm-trigger-wrap {
+  transform: scale(0.6);
 }
 
 .tm-trigger {
@@ -55,8 +80,20 @@
   transition: filter 0.3s;
 }
 
-.tm-trigger:hover {
+.tm-trigger:hover,
+.tm-trigger:focus-visible {
   filter: brightness(1.5);
+}
+
+.tm-trigger:focus-visible {
+  outline: none;
+}
+
+/* The clip hides an outline on the button, so the ring goes on the box. */
+.tm-trigger-wrap:has(.tm-trigger:focus-visible) {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 4px;
+  border-radius: 50%;
 }
 
 .tm-trigger-icon {
@@ -73,9 +110,49 @@
   transition: transform 0.3s, filter 0.3s;
 }
 
-.tm-trigger:hover + .tm-trigger-icon {
+.tm-trigger:hover ~ .tm-trigger-icon,
+.tm-trigger:focus-visible ~ .tm-trigger-icon {
   transform: rotate(12deg) scale(1.25);
   filter: brightness(1.1);
+}
+
+/* What the blob is, for anyone who hasn't met it yet. */
+.tm-hint {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-6px, -50%);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.tm-trigger:hover ~ .tm-hint,
+.tm-trigger:focus-visible ~ .tm-hint,
+#tm-root.tm-nudge .tm-hint {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+#tm-root.tm-scrolling .tm-hint {
+  opacity: 0;
+}
+
+/* A one-time nudge: the blob pulses twice while the hint shows. */
+#tm-root.tm-nudge .tm-trigger,
+#tm-root.tm-nudge .tm-trigger-icon {
+  animation: tm-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes tm-pulse {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.15; }
 }
 
 .tm-defs {
@@ -91,23 +168,32 @@
   inset: 0;
   z-index: 2147483002;
   display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 40px 24px;
   overflow-y: auto;
+  color: #fff;
 }
 
 #tm-root.tm-open .tm-overlay {
+  display: block;
+}
+
+/* Fills at least the screen and grows with its content, so tall content scrolls rather than clips. */
+.tm-stage {
+  position: relative;
   display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 64px 24px;
+  box-sizing: border-box;
 }
 
 .tm-close {
   position: fixed;
   top: 16px;
   right: 16px;
-  z-index: 2147483003;
+  z-index: 2;
   padding: 8px 16px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 999px;
@@ -122,14 +208,24 @@
   color: #fff;
 }
 
-/* ---------- starfield (ported from globals.css) ---------- */
+.tm-close:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+/* ---------- starfield ---------- */
 
 .tm-sky {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  background: radial-gradient(ellipse at center, #1b2735 0%, #27272a 100%);
+  background: var(--tm-sky);
+}
+
+/* The trigger's sky fills the blob, not the screen. */
+.tm-trigger .tm-sky {
+  position: absolute;
 }
 
 .tm-stars1,
@@ -140,19 +236,17 @@
   left: 0;
   width: 200%;
   height: 200%;
+  background-image: url("/_tm/stardust.png");
   background-repeat: repeat;
   background-size: contain;
   animation: tm-move-stars 50s linear infinite;
 }
 
 .tm-stars1 {
-  background-image: url("/_tm/stardust.png");
   opacity: 0.25;
-  animation-duration: 50s;
 }
 
 .tm-stars2 {
-  background-image: url("/_tm/stardust.png");
   opacity: 0.5;
   background-position: 75% 50%;
   animation-duration: 100s;
@@ -160,7 +254,6 @@
 }
 
 .tm-stars3 {
-  background-image: url("/_tm/stardust.png");
   background-position: 25% 0%;
   animation-duration: 300s;
   animation-delay: -20s;
@@ -171,23 +264,16 @@
   to { transform: translate3d(-50%, -50%, 0); }
 }
 
-/* Content sits above the starfield. */
-.tm-title,
-.tm-grid {
-  position: relative;
-  z-index: 1;
-}
-
 /* ---------- title ---------- */
 
 .tm-title {
-  margin: 0 0 8px;
+  position: relative;
+  margin: 0;
   padding-left: 10px;
-  color: #fff;
   text-align: center;
-  font-family: "Lato", system-ui, sans-serif;
+  font-family: "tm-lato", system-ui, sans-serif;
   font-weight: 300;
-  font-size: clamp(28px, 6vw, 50px);
+  font-size: clamp(32px, 5vw, 50px);
   letter-spacing: 10px;
 }
 
@@ -198,76 +284,124 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* ---------- version grid ---------- */
+/* ---------- timeline ---------- */
 
-.tm-grid {
+.tm-timeline {
+  --tm-wh: clamp(56px, 8vw, 120px);
+  --tm-here: 22px;
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0;
   padding: 0;
   list-style: none;
-  width: 100%;
-  max-width: 1100px;
 }
 
-@media (min-width: 700px) {
-  .tm-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* The line through time, from faint past to the bright present. */
+.tm-timeline::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--tm-here) + var(--tm-wh) / 2);
+  left: calc(100% / 16);
+  right: calc(100% / 16);
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.45));
 }
 
 .tm-entry {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 8px;
+  gap: 4px;
+  padding: 0 2px 8px;
+  color: inherit;
+  text-align: center;
   text-decoration: none;
   border-radius: 12px;
+  outline: none;
 }
 
-.tm-entry:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.7);
-  outline-offset: 2px;
+.tm-here {
+  height: var(--tm-here);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  visibility: hidden;
+}
+
+.tm-current .tm-here {
+  visibility: visible;
 }
 
 .tm-name {
-  font-family: "Lato", system-ui, sans-serif;
-  font-size: clamp(18px, 3vw, 30px);
+  margin-top: 6px;
+  font-family: "tm-lato", system-ui, sans-serif;
+  font-size: clamp(13px, 1.5vw, 20px);
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.3);
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.35);
   transition: color 0.3s;
 }
 
 .tm-date {
-  font-size: 15px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.1);
+  font-size: clamp(11px, 1vw, 14px);
+  color: rgba(255, 255, 255, 0.2);
   transition: color 0.3s;
 }
 
 .tm-entry:hover .tm-name,
-.tm-entry:focus-visible .tm-name { color: rgba(255, 255, 255, 0.8); }
+.tm-entry:focus-visible .tm-name,
+.tm-current .tm-name {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .tm-entry:hover .tm-date,
-.tm-entry:focus-visible .tm-date { color: rgba(255, 255, 255, 0.5); }
+.tm-entry:focus-visible .tm-date,
+.tm-current .tm-date {
+  color: rgba(255, 255, 255, 0.55);
+}
 
-.tm-current .tm-name { color: rgba(255, 255, 255, 0.55); }
+.tm-entry:focus-visible .tm-wormhole {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 4px;
+}
 
-/* ---------- wormhole (ported from globals.css) ---------- */
+/* ---------- wormhole ---------- */
 
+/*
+ * The rings spin and shrink with rotate and scale, which the compositor
+ * handles alone; animating width and height would lay the page out again on
+ * every frame.
+ */
 .tm-wormhole {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 140px;
-  height: 140px;
-  max-width: 100%;
-  background: radial-gradient(circle, black, #1a1a2e, #16213e, transparent, transparent);
+  width: var(--tm-wh);
+  height: var(--tm-wh);
+  border-radius: 50%;
+  background: var(--tm-hole);
+  transition: scale 0.3s ease;
+}
+
+.tm-entry:hover .tm-wormhole,
+.tm-entry:focus-visible .tm-wormhole {
+  scale: 1.1;
+}
+
+.tm-current .tm-wormhole {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5), 0 0 24px 4px rgba(120, 160, 255, 0.35);
 }
 
 .tm-wormhole i {
   position: absolute;
-  width: 140px;
-  height: 140px;
+  inset: 0;
   border-radius: 50%;
   box-shadow: inset 0 0 20px 5px rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -278,31 +412,138 @@
 .tm-wormhole i:nth-child(2) {
   opacity: 0.5;
   background-position: 75% 50%;
-  animation: tm-spin 3s linear infinite, tm-resize 2s ease-in-out infinite -0.4s;
+  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in-out infinite -0.4s;
 }
 
 .tm-wormhole i:nth-child(3) {
   opacity: 0.75;
   background-position: 25% 0%;
-  animation: tm-spin 3s linear infinite, tm-resize 2s ease-in-out infinite -1.1s;
+  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in-out infinite -1.1s;
 }
 
 .tm-wormhole i:nth-child(4) {
   opacity: 0.25;
   background-position: 50% 33%;
-  animation: tm-spin 3s linear infinite, tm-resize 2s ease-in-out infinite -1.7s;
+  animation: tm-spin 3s linear infinite, tm-shrink 2s ease-in-out infinite -1.7s;
 }
 
 @keyframes tm-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
 }
 
-@keyframes tm-resize {
-  0% { width: 140px; height: 140px; opacity: 1; }
-  99% { width: 0; height: 0; opacity: 1; }
-  99.5% { width: 0; height: 0; opacity: 0; }
-  100% { width: 140px; height: 140px; opacity: 0; }
+@keyframes tm-shrink {
+  0% { scale: 1; opacity: 1; }
+  99% { scale: 0; opacity: 1; }
+  99.5% { scale: 0; opacity: 0; }
+  100% { scale: 1; opacity: 0; }
+}
+
+/* ---------- preview ---------- */
+
+.tm-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 720px;
+  min-height: 150px;
+}
+
+.tm-thumb {
+  flex: none;
+  width: 240px;
+  height: 150px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  object-fit: cover;
+  object-position: top;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Colours are set on every text element: the host page's own p or h2 rules would otherwise win. */
+.tm-preview-name {
+  margin: 0;
+  color: #fff;
+  font-family: "tm-lato", system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.tm-preview-date {
+  margin: 2px 0 8px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.tm-preview-blurb {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.tm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- departure ---------- */
+
+/* Everything but the chosen wormhole falls away... */
+#tm-root.tm-departing .tm-title,
+#tm-root.tm-departing .tm-preview,
+#tm-root.tm-departing .tm-close,
+#tm-root.tm-departing .tm-timeline::before,
+#tm-root.tm-departing .tm-timeline > li:not(.tm-chosen) {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* ...and the warp grows out of it until the screen is inside the wormhole. */
+.tm-warp {
+  position: fixed;
+  z-index: 2147483004;
+  border-radius: 50%;
+  background: url("/_tm/stardust.png"), var(--tm-hole);
+  pointer-events: none;
+  translate: -50% -50%;
+}
+
+/* ---------- arrival ---------- */
+
+/*
+ * The arrival script in <head> sets tm-arriving before first paint, so the
+ * page starts covered, the colour the warp ended on. A hole then opens from
+ * the centre and the page comes through it.
+ */
+@property --tm-open {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+html.tm-arriving::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  pointer-events: none;
+  background: url("/_tm/stardust.png"), var(--tm-ink);
+  -webkit-mask-image: radial-gradient(circle, transparent var(--tm-open), #000 calc(var(--tm-open) + 12%));
+  mask-image: radial-gradient(circle, transparent var(--tm-open), #000 calc(var(--tm-open) + 12%));
+  animation: tm-arrive 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+@keyframes tm-arrive {
+  0% { --tm-open: 0%; opacity: 1; }
+  70% { opacity: 1; }
+  100% { --tm-open: 100%; opacity: 0; }
 }
 
 /* ---------- link out, phones only ---------- */
@@ -324,6 +565,7 @@
   color: rgba(255, 255, 255, 0.85);
   font-family: system-ui, sans-serif;
   font-size: 14.4px;
+  line-height: 1.2;
   text-decoration: none;
   backdrop-filter: blur(4px);
 }
@@ -339,6 +581,24 @@
   }
 }
 
+/* ---------- reduced motion ---------- */
+
 @media (prefers-reduced-motion: reduce) {
-  .tm-stars1, .tm-stars2, .tm-stars3, .tm-wormhole i { animation: none; }
+  .tm-stars1,
+  .tm-stars2,
+  .tm-stars3,
+  .tm-wormhole i,
+  #tm-root.tm-nudge .tm-trigger,
+  #tm-root.tm-nudge .tm-trigger-icon {
+    animation: none;
+  }
+
+  .tm-trigger-wrap,
+  .tm-wormhole {
+    transition: none;
+  }
+
+  html.tm-arriving::after {
+    display: none;
+  }
 }

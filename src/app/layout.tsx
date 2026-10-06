@@ -5,7 +5,7 @@ import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 
 import { SITE_URL } from "~/lib/site";
-import { TM_STYLESHEET } from "~/lib/time-machine";
+import { TM_ARRIVAL_SCRIPT, TM_STYLESHEET } from "~/lib/time-machine";
 
 export const metadata: Metadata = {
   title: "Andrés Movilla — Portfolio Time Travel",
@@ -32,13 +32,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
+    // suppressHydrationWarning: the arrival script may add tm-arriving to
+    // <html> before React hydrates.
+    <html lang="en" className={`${GeistSans.variable}`} suppressHydrationWarning>
       <head>
         {/*
           The time machine's head half, for the archived versions this layout
-          frames. The body half is rendered by the archive route.
+          frames: blocking styles and the arrival script, so an arrival by
+          time travel is covered before first paint. The body half is
+          rendered by the archive route.
         */}
         <link rel="stylesheet" href={TM_STYLESHEET} />
+        <script dangerouslySetInnerHTML={{ __html: TM_ARRIVAL_SCRIPT }} />
       </head>
       <body>
         {children}

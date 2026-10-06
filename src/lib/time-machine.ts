@@ -13,6 +13,14 @@ export const TM_SCRIPT = "/_tm/time-machine.js";
 export const TM_LINK_TEXT = "All versions →";
 
 /**
+ * Runs in <head> before first paint. A visitor arriving by time travel gets
+ * the page covered at once, so the arrival animation starts from inside the
+ * wormhole instead of flashing the page first.
+ */
+export const TM_ARRIVAL_SCRIPT =
+  'try{if(sessionStorage.getItem("tm-arrive")){sessionStorage.removeItem("tm-arrive");document.documentElement.classList.add("tm-arriving")}}catch(e){}';
+
+/**
  * The version list the widget reads, `current` marking the one on screen.
  * history.ts stays the one place versions are declared. Escaping "<" keeps
  * a value from ever closing the script tag early.

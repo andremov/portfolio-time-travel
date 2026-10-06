@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 import { DEFAULT_VERSION, findVersion } from "~/data/history";
 import {
+  TM_ARRIVAL_SCRIPT,
   TM_LINK_TEXT,
   TM_SCRIPT,
   TM_STYLESHEET,
@@ -21,14 +22,17 @@ const UPSTREAM = findVersion(DEFAULT_VERSION)!.link;
 const UPSTREAM_ORIGIN = new URL(UPSTREAM).origin;
 
 /**
- * The time machine, injected into every page the portfolio serves: the
- * stylesheet in <head>, the rest at the end of <body>.
+ * The time machine, injected into every page the portfolio serves. The
+ * stylesheet and the arrival script go in <head> so an arrival by time travel
+ * is covered before first paint; the rest goes at the end of <body>.
  *
  * The link out is a real anchor rather than something the script builds, so
  * the archive stays reachable — by a crawler, or by anyone whose JavaScript
  * never runs — without depending on the widget booting.
  */
-const WIDGET_HEAD = `<link rel="stylesheet" href="${TM_STYLESHEET}">`;
+const WIDGET_HEAD =
+  `<link rel="stylesheet" href="${TM_STYLESHEET}">` +
+  `<script>${TM_ARRIVAL_SCRIPT}</script>`;
 
 const WIDGET_BODY =
   `<script type="application/json" id="tm-versions">${timeMachineData(DEFAULT_VERSION)}</script>` +
