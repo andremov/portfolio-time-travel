@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 import Link from "next/link";
 import { history, DEFAULT_VERSION } from "~/data/history";
 import { versionHref } from "~/lib/resolve-route";
+import { SITE_URL } from "~/lib/site";
 
 const TITLE = "Every version of my portfolio";
 const DESCRIPTION =
@@ -16,6 +17,36 @@ export const metadata: Metadata = {
 };
 
 /**
+ * The archive, described as an ordered list of works.
+ *
+ * The Person node reuses the `@id` the portfolio itself publishes, so the two
+ * origins describe one author rather than two. The list gives the versions a
+ * machine-readable shape the framed pages cannot supply, since crawlers do not
+ * look inside an iframe.
+ */
+const SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: TITLE,
+  description: DESCRIPTION,
+  url: `${SITE_URL}/versions/`,
+  inLanguage: "en",
+  author: { "@id": `${SITE_URL}/#person` },
+  isPartOf: { "@id": `${SITE_URL}/#website` },
+  mainEntity: {
+    "@type": "ItemList",
+    numberOfItems: history.length,
+    itemListElement: history.map((version, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: `${version.name} (${version.date})`,
+      description: version.blurb,
+      url: `${SITE_URL}${versionHref(version.slug)}`,
+    })),
+  },
+};
+
+/**
  * The shell's own content, on its own page.
  *
  * Crawlers credit the framed portfolio to its own origin, and the time machine
@@ -26,6 +57,12 @@ export const metadata: Metadata = {
 export default function VersionsPage() {
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-16 text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(SCHEMA).replace(/</g, "\\u003c"),
+        }}
+      />
       <div className="mx-auto max-w-2xl">
         <h1 className="text-3xl font-bold tracking-tight">
           Every version of my portfolio
