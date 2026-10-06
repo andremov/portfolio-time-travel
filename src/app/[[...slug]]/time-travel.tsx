@@ -51,7 +51,7 @@ export default function TimeTravel({ versionSlug, iframeSrc }: TimeTravelProps) 
       <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 md:hidden">
         <Link
           href="/versions"
-          className="rounded-full bg-black/70 px-4 py-2 text-xs text-white/85 backdrop-blur-sm transition hover:bg-black/85 hover:text-white"
+          className="rounded-full bg-black/70 px-[19.2px] py-[9.6px] text-[14.4px] leading-[19.2px] text-white/85 backdrop-blur-sm transition hover:bg-black/85 hover:text-white"
         >
           All versions →
         </Link>
