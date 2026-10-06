@@ -7,7 +7,7 @@ export interface PortfolioVersion {
   blurb: string;
 }
 
-export const history: PortfolioVersion[] = [
+const deployed: PortfolioVersion[] = [
   {
     name: "Circular",
     slug: "v1",
@@ -73,6 +73,22 @@ export const history: PortfolioVersion[] = [
       "The current portfolio: a digital garden of projects and writing that grows in place instead of being replaced.",
   },
 ];
+
+/**
+ * Under `npm run dev:mock`, placeholder pages stand in for the deployments.
+ *
+ * Read from process.env rather than ~/env: the archive frame's client bundle
+ * imports this module through resolve-route, and ~/env throws when a server
+ * variable is touched on the client. There it is simply undefined.
+ */
+const MOCK_ORIGIN = process.env.MOCK_VERSIONS_ORIGIN;
+
+export const history: PortfolioVersion[] = MOCK_ORIGIN
+  ? deployed.map((version) => ({
+      ...version,
+      link: `${MOCK_ORIGIN}/${version.slug}`,
+    }))
+  : deployed;
 
 export const DEFAULT_VERSION = "v8";
 

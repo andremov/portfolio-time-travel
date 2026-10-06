@@ -8,6 +8,8 @@ export const env = createEnv({
    */
   server: {
     NODE_ENV: z.enum(["development", "test", "production"]),
+    // Set by `npm run dev:mock`: serve placeholder versions from this origin.
+    MOCK_VERSIONS_ORIGIN: z.string().url().optional(),
   },
 
   /**
@@ -25,6 +27,7 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    MOCK_VERSIONS_ORIGIN: process.env.MOCK_VERSIONS_ORIGIN,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
